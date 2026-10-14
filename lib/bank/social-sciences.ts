@@ -1,0 +1,124 @@
+import type { DailyPrompt } from "./types";
+
+export const SOCIAL_SCIENCES: DailyPrompt[] = [
+  {
+    id: "soc-01",
+    task: "respond",
+    topic: "Young people and participation",
+    text: "Write a paragraph that summarises Rahman’s (2019) main point in your own words and then responds to it. Do you agree that low turnout does not necessarily mean young people are uninterested in politics?",
+    source: {
+      author: "Rahman",
+      year: 2019,
+      kind: "text",
+      text: "Low turnout among young voters is often interpreted as political apathy. However, research suggests that many young people participate in other ways, such as signing petitions, joining protests or boycotting products. This may indicate a shift in the forms of participation rather than a simple decline in political interest.",
+    },
+  },
+  {
+    id: "soc-02",
+    task: "compare",
+    topic: "Hard and soft power",
+    text: "Write a paragraph comparing hard power and soft power as ways for states to influence others. Use Petrova (2018) as evidence.",
+    source: {
+      author: "Petrova",
+      year: 2018,
+      kind: "text",
+      text: "States can influence others through hard power, such as military force or economic sanctions, or through soft power, which relies on attraction: culture, values and international reputation. Hard power can produce quick results, whereas soft power tends to work slowly but may create more lasting cooperation.",
+    },
+  },
+  {
+    id: "soc-03",
+    task: "position",
+    topic: "Universal basic income",
+    text: "Should governments give every adult a regular universal basic income, whether or not they work? Write a paragraph that takes a clear position and justifies it.",
+  },
+  {
+    id: "soc-04",
+    task: "data",
+    topic: "Generations and home ownership",
+    text: "Write a paragraph describing the main trends in Ferreira (2024) and suggesting what they might mean for young adults.",
+    source: {
+      author: "Ferreira",
+      year: 2024,
+      kind: "data",
+      text: "According to UK household survey data, the proportion of adults aged 25–34 who owned their home fell from 59% in 2003 to 41% in 2023, while the share renting privately rose from 18% to 39%. Among adults aged 65 and over, home ownership remained stable at around 75%.",
+    },
+  },
+  {
+    id: "soc-05",
+    task: "cause",
+    topic: "Social media and polarisation",
+    text: "Write a paragraph explaining how social media might contribute to political polarisation. Use Kim (2022) as evidence, and mention one limit to this explanation.",
+    source: {
+      author: "Kim",
+      year: 2022,
+      kind: "text",
+      text: "Social media platforms are often blamed for increasing political polarisation. Algorithms that recommend content similar to what users already engage with may reinforce existing views. However, the evidence is mixed: some studies find that people actually encounter a wider range of opinions online than they do offline.",
+    },
+  },
+  {
+    id: "soc-06",
+    task: "define",
+    topic: "Social capital",
+    text: "Write a paragraph that defines the concept of social capital and illustrates it with an example from everyday or student life.",
+  },
+  {
+    id: "soc-07",
+    task: "apply",
+    topic: "Nudging household recycling",
+    text: "Apply the idea of choice architecture described by Okonkwo (2020) to this case: a city council wants more residents to recycle their household waste. Write a paragraph suggesting how the council could use this approach and how effective it might be.",
+    source: {
+      author: "Okonkwo",
+      year: 2020,
+      kind: "text",
+      text: "Behavioural approaches to public policy suggest that people’s choices are shaped by how options are presented. Rather than banning or taxing behaviour, governments can redesign the ‘choice architecture’, for example by making the desired option the default, while still leaving people free to choose otherwise.",
+    },
+  },
+  {
+    id: "soc-08",
+    task: "respond",
+    topic: "The myth of meritocracy",
+    text: "Write a paragraph that summarises Dubois’s (2021) main point in your own words and responds to it. To what extent do you agree that meritocracy is more an ideal than a reality?",
+    source: {
+      author: "Dubois",
+      year: 2021,
+      kind: "text",
+      text: "Many societies describe themselves as meritocracies, in which rewards follow talent and effort. Sociologists have questioned this, pointing out that educational success remains strongly linked to family background. Some argue that belief in meritocracy can even make inequality seem fair, because those who fail appear to deserve it.",
+    },
+  },
+  {
+    id: "soc-09",
+    task: "counter",
+    topic: "Are international organisations effective?",
+    text: "A common view is that international organisations such as the United Nations are ineffective because they cannot force powerful states to obey their decisions. Write a paragraph that responds to this view, recognising any strength it has.",
+  },
+  {
+    id: "soc-10",
+    task: "data",
+    topic: "Gender and unpaid work",
+    text: "Write a paragraph describing the figures in Sharma (2025) and interpreting what they suggest about gender and unpaid work.",
+    source: {
+      author: "Sharma",
+      year: 2025,
+      kind: "data",
+      text: "A 2024 time-use study of 1,200 UK couples with children found that women spent an average of 4.1 hours a day on unpaid care and housework, compared with 2.6 hours for men. Among couples where both partners worked full-time, the gap narrowed only slightly, to 3.5 and 2.4 hours.",
+    },
+  },
+  {
+    id: "soc-11",
+    task: "problem",
+    topic: "Loneliness as policy issue",
+    text: "Write a paragraph that identifies the problem described by Halvorsen (2023) and proposes one policy solution, evaluating its strengths and limits. Refer to Halvorsen (2023) in your answer.",
+    source: {
+      author: "Halvorsen",
+      year: 2023,
+      kind: "text",
+      text: "Loneliness is increasingly recognised as a public health issue, associated with poorer physical and mental health. It is not limited to older people: young adults also report high levels. Because loneliness has social causes, such as changing work patterns and weaker local communities, purely medical responses may have limited effect.",
+    },
+  },
+  {
+    id: "soc-12",
+    task: "position",
+    topic: "Paying for climate action",
+    text: "Should the countries that have historically produced the most carbon emissions pay more towards climate action in poorer countries? Write a paragraph that takes a clear position and justifies it.",
+  },
+];

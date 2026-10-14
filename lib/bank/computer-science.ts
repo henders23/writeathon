@@ -1,0 +1,124 @@
+import type { DailyPrompt } from "./types";
+
+export const COMPUTER_SCIENCE: DailyPrompt[] = [
+  {
+    id: "cs-01",
+    task: "respond",
+    topic: "AI assistants for novice programmers",
+    text: "Write a paragraph that summarises Nguyen’s (2024) main point in your own words and then responds to it: should first-year students be allowed to use AI coding assistants? Give a reason.",
+    source: {
+      author: "Nguyen",
+      year: 2024,
+      kind: "text",
+      text: "AI coding assistants can help novice programmers produce working code quickly and spend less time stuck on syntax errors. Some educators argue, however, that relying on these tools too early may prevent students from developing the debugging and problem-decomposition skills on which programming expertise depends.",
+    },
+  },
+  {
+    id: "cs-02",
+    task: "compare",
+    topic: "Microservices versus monoliths",
+    text: "Write a paragraph comparing microservice and monolithic architectures, and suggest which might suit a small start-up and which a large organisation. Use Petrov (2021) as evidence.",
+    source: {
+      author: "Petrov",
+      year: 2021,
+      kind: "text",
+      text: "Microservice architectures divide an application into small, independently deployable services, which can make it easier for large teams to update parts of a system separately. The trade-off is greater operational complexity, since network communication, monitoring and data consistency become harder to manage than in a single monolithic application.",
+    },
+  },
+  {
+    id: "cs-03",
+    task: "position",
+    topic: "Choosing a first programming language",
+    text: "Should university computer science courses teach first-year students to program in Python, or start with a lower-level language such as C? Write a paragraph stating your position and justifying it with reasons.",
+  },
+  {
+    id: "cs-04",
+    task: "data",
+    topic: "Open-source maintainer workload",
+    text: "Write a paragraph describing the figures in Adeyemi (2023) and explaining what they might suggest about the reliability of software that depends on open-source code.",
+    source: {
+      author: "Adeyemi",
+      year: 2023,
+      kind: "data",
+      text: "In a 2023 survey of 600 maintainers of widely used open-source projects, 60% described themselves as unpaid volunteers. Nearly half said they had considered quitting in the previous year, most often citing lack of time and stress caused by user demands. Only 12% received regular funding.",
+    },
+  },
+  {
+    id: "cs-05",
+    task: "cause",
+    topic: "Bias in machine learning",
+    text: "Using Rahman (2020) as evidence, write a paragraph explaining how bias can enter machine learning systems and what effects it can have on the people affected by them.",
+    source: {
+      author: "Rahman",
+      year: 2020,
+      kind: "text",
+      text: "Machine learning systems can produce biased outcomes even when their designers do not intend them to. A common cause is training data that under-represents certain groups or reflects past discrimination; for example, some facial recognition models trained mostly on lighter-skinned faces have shown higher error rates for darker-skinned people.",
+    },
+  },
+  {
+    id: "cs-06",
+    task: "define",
+    topic: "Abstraction in computing",
+    text: "Write a paragraph defining ‘abstraction’ in computer science and illustrating it with an example, such as a function, an API or a file system.",
+  },
+  {
+    id: "cs-07",
+    task: "apply",
+    topic: "Principle of least privilege",
+    text: "Apply the principle of least privilege described by Schmidt (2018) to a concrete case, such as a university student records system or a smartphone app. Explain who or what should have which access, and why.",
+    source: {
+      author: "Schmidt",
+      year: 2018,
+      kind: "text",
+      text: "The principle of least privilege states that every user, program or process should have only the access rights it needs to do its job, and no more. Applying it consistently limits the damage that can result if an account is compromised or a program behaves incorrectly.",
+    },
+  },
+  {
+    id: "cs-08",
+    task: "respond",
+    topic: "Energy demands of AI",
+    text: "Write a paragraph that summarises Moreno’s (2025) argument in your own words and responds to it: is improving efficiency enough to reduce the environmental impact of AI? Give a reason.",
+    source: {
+      author: "Moreno",
+      year: 2025,
+      kind: "text",
+      text: "The rapid growth of large AI models has increased the electricity and water demands of data centres. Although improvements in hardware and software can reduce the energy needed for each task, total consumption may still rise if these efficiency gains encourage much wider use.",
+    },
+  },
+  {
+    id: "cs-09",
+    task: "counter",
+    topic: "Does algorithm efficiency still matter?",
+    text: "Some people argue that because computers keep getting faster, programmers no longer need to worry about how efficient their algorithms are. Write a paragraph responding to this view.",
+  },
+  {
+    id: "cs-10",
+    task: "data",
+    topic: "Phishing and security training",
+    text: "Write a paragraph describing the changes in Al-Farsi’s (2024) figures and interpreting what they suggest about the effectiveness of one-off security training.",
+    source: {
+      author: "Al-Farsi",
+      year: 2024,
+      kind: "data",
+      text: "In a phishing simulation at one university in 2023, 19% of 1,000 staff clicked a fake link before receiving security training. One month after the training, this fell to 7%. However, when the test was repeated six months later, the rate had risen again to 12%.",
+    },
+  },
+  {
+    id: "cs-11",
+    task: "problem",
+    topic: "Web accessibility in practice",
+    text: "Write a paragraph identifying the problem described by Mwangi (2022) and proposing a practical solution for a software development team. Briefly evaluate how realistic your solution is.",
+    source: {
+      author: "Mwangi",
+      year: 2022,
+      kind: "text",
+      text: "Many websites remain difficult to use for people with disabilities, such as those who rely on screen readers or keyboard navigation. Accessibility problems are usually cheaper to prevent during design than to fix after release, yet accessibility is often treated as a final check rather than a core requirement.",
+    },
+  },
+  {
+    id: "cs-12",
+    task: "position",
+    topic: "Police access to encrypted messages",
+    text: "Should governments be able to require messaging apps to give police access to encrypted messages in serious criminal cases? Write a paragraph stating your position and justifying it with reasons.",
+  },
+];
