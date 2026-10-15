@@ -1,4 +1,4 @@
-import type { Source, TaskId } from "./bank/types";
+import type { Frame, Source, TaskId } from "./bank/types";
 import type { HuntItem, RowId, SurgeryItem } from "./content";
 
 export type Evidence = "S" | "G" | "N"; // used well, gap noticed, not tested
@@ -36,16 +36,25 @@ export type Plan = { claim: string; support: string; soWhat: string };
 
 export type Rewrite = { text: string; ok: boolean; comment: string; hintLevel: number };
 
+export type RevisionLevel = "idea" | "structure" | "sentence" | "word";
+export type RevisionResult = {
+  summary: string;
+  changes: { level: RevisionLevel; what: string }[];
+  deeper: boolean; // did the student revise ideas or structure, not only sentences and words?
+  nextStep: string;
+};
+
 export type Session = {
   id: string;
   date: string; // local YYYY-MM-DD
   startedAt: string;
-  mode: "write" | "hunt";
+  mode: "write" | "hunt" | "revise";
   discipline: string;
   promptId: string;
   task: TaskId;
   topic: string;
   promptText: string;
+  frame?: Frame;
   source?: Source;
   focusId: string;
   plan: Plan;
@@ -60,6 +69,9 @@ export type Session = {
   feedbackError?: string;
   rewrites?: Rewrite[];
   banked?: boolean;
+  revisionOf?: string; // revise mode: the paragraph being reworked
+  revision?: RevisionResult;
+  revisionError?: string;
   sample?: boolean;
 };
 
@@ -72,7 +84,11 @@ export type BankItem = {
   label: string;
   before: string;
   after: string;
+  transfer?: string; // a new sentence using the pattern on another topic
   reused: number;
+  step?: number; // position in the review schedule
+  due?: string; // next review date
+  reviews?: { date: string; ok: boolean }[];
 };
 
 export type Profile = {

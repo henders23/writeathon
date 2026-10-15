@@ -6,6 +6,14 @@ Ten minutes of academic writing a day. University students write one paragraph o
 
 Students learn more from revising than from drafting, so the key moment is the **rewrite**, not the writing. Feedback is focused, not comprehensive: one sentence to fix, preferably on the student's current focus. Hints step up only as far as they're needed (a clue, then the pattern on a different topic, then a model). The app never rewrites the student's paragraph. A sentence that has been fixed goes into the student's **bank**. Banked patterns come back on later days, and when a student uses one again *without being asked*, the app marks it. That unprompted reuse is the app's evidence that learning has happened.
 
+## Built in after an expert review
+
+- **Real genres, real readers.** Every prompt is framed by a genre drawn from the disciplines (informed by the BAWE genre families: case notes, design reports, policy briefings, literature reviews, consultation responses…) and by a reader, some of them non-specialists. The feedback is told the student's subject, the genre and the reader, so it judges conventions such as "I", the passive and how much to define in the right way for each discipline.
+- **The bank is spaced retrieval, not re-reading.** Banked sentences come back after 1, 3, 7, 14 and 30 days. The student sees the sentence as it was *before* the fix and fixes it again from memory before seeing their banked version. A miss sends it back to tomorrow.
+- **Seeing the model isn't the end.** If a student reveals "Show me a version", they can only bank the fix after writing a new sentence that uses the same pattern on a different topic. That's a transfer check, so copying the model isn't enough.
+- **Beat your last attempt.** Prompts recur every 12 days, so repetition is built in. On the Read step the student sees how they did last time on the same question (their paragraph is folded away). The feedback shows then vs now.
+- **Weekly revision day.** Once a week (when there are at least two paragraphs from the last seven days), the student can rework a whole paragraph instead of one sentence. The AI sorts each change by level (idea, structure, sentence, word) and praises the deeper revision experienced writers make, which Sommers found novices rarely attempt. A revision day keeps the streak.
+
 ## The 10-minute session
 
 | Time | Step | What happens |
@@ -71,5 +79,7 @@ For offline testing you can point `OPENAI_BASE_URL` at a mock of the Responses A
 | `app/write` | The Read → Plan → Write session (and Phrase Hunt writing) |
 | `app/feedback/[id]` + `components/RewriteIt.tsx` | Feedback, highlighted paragraph, Rewrite it with stepped hints, banking |
 | `app/api/feedback` | Turns a paragraph into structured feedback (including reuse of banked patterns) |
-| `app/api/rewrite` | Checks a rewritten sentence |
+| `app/api/rewrite` | Checks a rewritten sentence, a bank review (fixing it again from memory), or a transfer sentence |
+| `app/review` | Bank review: spaced retrieval of fixed sentences |
+| `app/revise`, `app/api/revise` | Weekly revision day and the idea/structure/sentence/word comparison |
 | `app/api/hunt`, `app/api/surgery` | Generate the day's games from the prompt |

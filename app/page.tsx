@@ -2,16 +2,24 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { Check, Flame, Pen, Scissors, Search, Snow } from "@/components/Icons";
+import FrameLine from "@/components/FrameLine";
+import { Bookmark, Check, Flame, Pen, Repeat, Scissors, Search, Snow } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
 import TabBar from "@/components/TabBar";
 import { FOCUS_BY_ID, ROWS, TASKS } from "@/lib/content";
-import { dayKey, greeting, longDate, weekdayLetter, weekdayName } from "@/lib/dates";
+import { dayKey, greeting, longDate, parseDay, weekdayLetter, weekdayName } from "@/lib/dates";
+
+function shortDate(key: string) {
+  return parseDay(key).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
+}
 import { DISCIPLINE_LABEL } from "@/lib/disciplines";
 import {
   counts,
   currentStreak,
+  dueBankItems,
+  lastAttempt,
+  revisionDue,
   focusForDay,
   freezesAvailable,
   lastSevenDays,
@@ -45,7 +53,10 @@ export default function Today() {
   const focus = FOCUS_BY_ID[focusForDay(profile, prompt)];
   const resting = focus.id !== profile.focus.id ? FOCUS_BY_ID[profile.focus.id] : null;
   const lastGap = [...sessionsWithFeedback(sessions)].reverse().find((s) => s.feedback!.workOn?.focusId === focus.id);
-  const recentBank = [...bank].reverse().find((b) => b.date < today) ?? null;
+  const due = dueBankItems(bank, today);
+  const repeat = lastAttempt(sessions, prompt.id, today);
+  const reviseNow = revisionDue(sessions, today);
+  const revisedToday = sessions.find((s) => s.date === today && s.mode === "revise");
   const initials = profile.name
     .split(/\s+/)
     .map((w) => w[0])
@@ -108,11 +119,38 @@ export default function Today() {
           </p>
         </section>
 
+        {(reviseNow || revisedToday) && (
+          <section className="card blue" aria-label="Revision day">
+            <div className="row gap-8">
+              <Repeat size={18} color="var(--blue)" />
+              <span className="eyebrow blue">Revision day</span>
+            </div>
+            <p className="body" style={{ color: "var(--ink-2)" }}>
+              Once a week, rework a whole paragraph instead of one sentence. Expert writers revise their ideas and structure, not just their words.
+            </p>
+            {revisedToday ? (
+              <Link href={`/revise/${revisedToday.id}`} className="small" style={{ color: "var(--blue)" }}>See today&apos;s revision</Link>
+            ) : (
+              <Link href="/revise" className="btn">
+                <Repeat color="var(--card)" size={20} />
+                <span>Revise a paragraph from this week</span>
+              </Link>
+            )}
+            {!revisedToday && <p className="small">Or write today&apos;s new paragraph below. Either keeps your streak.</p>}
+          </section>
+        )}
+
         <section className="card" aria-label="Today's writing">
           <p className="eyebrow">
             Today · {TASKS[prompt.task].label} · {DISCIPLINE_LABEL[profile.discipline] ?? "General"}
           </p>
+          {prompt.frame && <FrameLine frame={prompt.frame} />}
           <p className="prompt-text">{prompt.text}</p>
+          {repeat && (
+            <p className="small" style={{ color: "var(--amber-deep)" }}>
+              You answered this question on {shortDate(repeat.date)}. Today, beat your last attempt.
+            </p>
+          )}
           <p className="small">{prompt.source ? `With a short source (${prompt.source.author}, ${prompt.source.year}).` : "No source today: your own ideas."} One paragraph, about 100–150 words.</p>
           <Link href="/write" className="btn">
             <Pen color="var(--card)" />
@@ -124,7 +162,7 @@ export default function Today() {
           </Link>
           {todaysSession && (
             <Link
-              href={todaysSession.mode === "hunt" ? `/hunt/results/${todaysSession.id}` : `/feedback/${todaysSession.id}`}
+              href={todaysSession.mode === "hunt" ? `/hunt/results/${todaysSession.id}` : todaysSession.mode === "revise" ? `/revise/${todaysSession.id}` : `/feedback/${todaysSession.id}`}
               className="small"
               style={{ color: "var(--blue)" }}
             >
@@ -157,12 +195,14 @@ export default function Today() {
           )}
         </section>
 
-        {recentBank && (
-          <section className="card tight" aria-label="From your bank">
-            <span className="eyebrow blue">From your bank · {recentBank.label}</span>
-            <p className="bank-after">{recentBank.after}</p>
-            <p className="small">Can you use this pattern again today, without looking?</p>
-          </section>
+        {due.length > 0 && (
+          <Link href="/review" className="card tight row gap-12" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "var(--ink)" }}>
+            <Bookmark color="var(--blue)" size={22} />
+            <span className="stack gap-2 grow">
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Bank review · {due.length} due</span>
+              <span className="small">Fix {due.length === 1 ? "a sentence" : "sentences"} you fixed before, from memory. About a minute.</span>
+            </span>
+          </Link>
         )}
 
         <Link href="/surgery" className="card tight row gap-12" style={{ flexDirection: "row", alignItems: "center", textDecoration: "none", color: "var(--ink)" }}>

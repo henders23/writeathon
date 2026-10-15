@@ -6,12 +6,14 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Close, Eye, Search } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
+import FrameLine from "@/components/FrameLine";
+import LastAttempt from "@/components/LastAttempt";
 import SourceCard from "@/components/SourceCard";
 import Stepper from "@/components/Stepper";
 import { FOCUS_BY_ID, PLAN_SECONDS, READ_SECONDS, ROWS, TARGET_WORDS, TASKS, WRITE_SECONDS } from "@/lib/content";
 import { dayKey } from "@/lib/dates";
 import { findPhrase, longestCopiedRun, wordCount } from "@/lib/match";
-import { focusForDay, todaysPrompt } from "@/lib/progress";
+import { focusForDay, lastAttempt, todaysPrompt } from "@/lib/progress";
 import { newId, upsertSession, useAppState } from "@/lib/store";
 import type { Plan, Session } from "@/lib/types";
 
@@ -101,6 +103,7 @@ function WriteSession() {
 
   const focus = FOCUS_BY_ID[focusId];
   const task = TASKS[prompt.task];
+  const repeat = lastAttempt(state.sessions, prompt.id, today);
   const elapsed = Math.floor((now - stageStart) / 1000);
 
   function go(next: Stage) {
@@ -122,6 +125,7 @@ function WriteSession() {
       task: prompt.task,
       topic: prompt.topic,
       promptText: prompt.text,
+      frame: prompt.frame,
       source: prompt.source,
       focusId,
       plan,
@@ -166,7 +170,9 @@ function WriteSession() {
             <h1 className="h1" style={{ fontSize: 26 }}>Read</h1>
             <span className="small" aria-live="off">{left > 0 ? `About ${clock(left)}` : "Take your time"}</span>
           </div>
+          {prompt.frame && <FrameLine frame={prompt.frame} />}
           <p className="prompt-text">{prompt.text}</p>
+          {repeat && <LastAttempt session={repeat} />}
           {prompt.source && <SourceCard source={prompt.source} />}
           <section className="card tight" aria-labelledby="moves">
             <h2 id="moves" className="eyebrow" style={{ fontWeight: 600 }}>How a paragraph like this works</h2>

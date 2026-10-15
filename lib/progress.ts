@@ -2,7 +2,7 @@ import { promptFor } from "./bank";
 import type { DailyPrompt } from "./bank/types";
 import { FIRST_FOCUS, FOCUSES, FOCUS_BY_ID, MIN_WORDS_TO_COUNT, NO_SOURCE_STAND_IN, ROW_IDS, type RowId } from "./content";
 import { addDays, dayKey, daysBetween } from "./dates";
-import type { AppState, Evidence, Profile, Session, SurgeryRun } from "./types";
+import type { AppState, BankItem, Evidence, Profile, Session, SurgeryRun } from "./types";
 
 /* ---------- Today's prompt and focus ---------- */
 
@@ -219,7 +219,7 @@ export function focusChips(row: RowId, profile: Profile, sessions: Session[]) {
 
 /** Average words per five minutes of writing, for a set of sessions. */
 export function wordsPerFive(sessions: Session[]): number | null {
-  const valid = sessions.filter((s) => counts(s) && s.writeSeconds >= 60);
+  const valid = sessions.filter((s) => counts(s) && s.mode !== "revise" && s.writeSeconds >= 60);
   if (!valid.length) return null;
   const rates = valid.map((s) => (s.words / Math.min(s.writeSeconds, 420)) * 300);
   return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
@@ -284,4 +284,72 @@ export function bestSurgeryThisWeek(runs: SurgeryRun[], today: string = dayKey()
   const weekAgo = addDays(today, -6);
   const scores = runs.filter((r) => r.date >= weekAgo).map((r) => r.points);
   return scores.length ? Math.max(...scores) : null;
+}
+
+/* ---------- Bank: spaced retrieval ---------- */
+
+/** Days until the next review after each successful recall. */
+export const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
+
+export function bankDue(b: BankItem): string | null {
+  if ((b.step ?? 0) >= REVIEW_INTERVALS.length) return null; // mastered
+  return b.due ?? addDays(b.date, REVIEW_INTERVALS[0]);
+}
+
+export function dueBankItems(bank: BankItem[], today: string = dayKey(), limit = 3): BankItem[] {
+  return bank
+    .filter((b) => {
+      const due = bankDue(b);
+      return due !== null && due <= today && b.date < today;
+    })
+    .sort((a, b) => (bankDue(a) ?? "").localeCompare(bankDue(b) ?? ""))
+    .slice(0, limit);
+}
+
+/** Move a banked item along (or back to the start of) its review schedule. */
+export function scheduleAfterReview(b: BankItem, ok: boolean, today: string = dayKey()): BankItem {
+  const reviews = [...(b.reviews ?? []), { date: today, ok }];
+  if (!ok) return { ...b, reviews, step: 0, due: addDays(today, REVIEW_INTERVALS[0]) };
+  const step = (b.step ?? 0) + 1;
+  const due = step >= REVIEW_INTERVALS.length ? undefined : addDays(today, REVIEW_INTERVALS[step]);
+  return { ...b, reviews, step, due };
+}
+
+export function nextReviewLabel(b: BankItem, today: string = dayKey()): string {
+  const due = bankDue(b);
+  if (!due) return "Mastered: no more reviews needed.";
+  const n = daysBetween(today, due);
+  return n <= 0 ? "Due now" : n === 1 ? "Next review tomorrow" : `Next review in ${n} days`;
+}
+
+/* ---------- Task repetition: beat your last attempt ---------- */
+
+/** The student's most recent earlier paragraph on the same prompt (prompts recur every 12 days). */
+export function lastAttempt(sessions: Session[], promptId: string, before: string): Session | null {
+  return (
+    [...sessions]
+      .reverse()
+      .find((s) => s.promptId === promptId && s.mode !== "revise" && s.date < before && counts(s)) ?? null
+  );
+}
+
+export function areasShownWell(s: Session): number | null {
+  if (!s.feedback) return null;
+  return ROW_IDS.filter((r) => s.feedback!.rowEvidence[r] === "S").length;
+}
+
+/* ---------- Weekly revision day ---------- */
+
+/** Paragraphs from the last 7 days that could be revised (have feedback, not yet revised). */
+export function revisionCandidates(sessions: Session[], today: string = dayKey()): Session[] {
+  const revised = new Set(sessions.filter((s) => s.mode === "revise").map((s) => s.revisionOf));
+  return sessions
+    .filter((s) => s.mode !== "revise" && s.feedback && s.date >= addDays(today, -6) && s.date < today && !revised.has(s.id))
+    .reverse();
+}
+
+/** Revision day comes round once a week, once there are at least two paragraphs to choose from. */
+export function revisionDue(sessions: Session[], today: string = dayKey()): boolean {
+  const recentRevision = sessions.some((s) => s.mode === "revise" && s.date > addDays(today, -7));
+  return !recentRevision && revisionCandidates(sessions, today).length >= 2;
 }

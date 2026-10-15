@@ -83,6 +83,10 @@ export function addToBank(item: BankItem) {
   update((s) => ({ ...s, bank: [...s.bank.filter((b) => b.sessionId !== item.sessionId), item] }));
 }
 
+export function updateBankItem(item: BankItem) {
+  update((s) => ({ ...s, bank: s.bank.map((b) => (b.id === item.id ? item : b)) }));
+}
+
 export function resetAll() {
   write(EMPTY);
 }

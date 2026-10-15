@@ -1,5 +1,6 @@
-import type { Source, TaskId } from "@/lib/bank/types";
+import type { Frame, Source, TaskId } from "@/lib/bank/types";
 import { FOCUS_BY_ID, ROW_IDS, TASKS, type HuntItem } from "@/lib/content";
+import { DISCIPLINE_LABEL } from "@/lib/disciplines";
 import { FEEDBACK_INSTRUCTIONS, FEEDBACK_SCHEMA } from "@/lib/instructions";
 import { guard, jsonError, structured } from "@/lib/server";
 import type { Feedback, Plan } from "@/lib/types";
@@ -9,6 +10,8 @@ export const maxDuration = 60;
 
 type Body = {
   task?: TaskId;
+  discipline?: string;
+  frame?: Frame;
   promptText?: string;
   source?: Source;
   focusId?: string;
@@ -37,6 +40,8 @@ export async function POST(req: Request) {
   const plan = b.plan && (b.plan.claim || b.plan.support || b.plan.soWhat) ? b.plan : null;
   const input = [
     `MODE: ${hunt.length ? "Phrase Hunt" : "Normal"}`,
+    `DISCIPLINE: ${DISCIPLINE_LABEL[b.discipline ?? ""] ?? "General academic"}`,
+    b.frame ? `GENRE: ${b.frame.genre}. READER: ${b.frame.reader}.` : "",
     task ? `TASK TYPE: ${task.label}. A paragraph like this usually: ${task.moves.join("; ")}.` : "",
     `PROMPT: ${b.promptText}`,
     b.source ? `SOURCE (${b.source.author}, ${b.source.year}; practice source): ${b.source.text}` : "SOURCE: none today",

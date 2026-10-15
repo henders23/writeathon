@@ -5,6 +5,7 @@ import Onboarding from "@/components/Onboarding";
 import TabBar from "@/components/TabBar";
 import { ROWS, ROW_IDS } from "@/lib/content";
 import { parseDay } from "@/lib/dates";
+import { nextReviewLabel } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
 
 export default function BankPage() {
@@ -30,8 +31,8 @@ export default function BankPage() {
         {items.length === 0 ? (
           <div className="card">
             <p className="body">
-              After each paragraph you rewrite one sentence. When your rewrite works, bank it. Banked patterns come back on later days, and
-              when you use one again without being asked, it&apos;s marked here.
+              After each paragraph you rewrite one sentence. When your rewrite works, bank it. Banked sentences come back for you to fix
+              from memory after 1, 3, 7, 14 and 30 days, and when you use a pattern again without being asked, it&apos;s marked here.
             </p>
           </div>
         ) : (
@@ -54,6 +55,8 @@ export default function BankPage() {
                     </div>
                     <p className="bank-before"><span className="sr-only">Before: </span>{b.before}</p>
                     <p className="bank-after"><span className="sr-only">After: </span>{b.after}</p>
+                    {b.transfer && <p className="small"><strong>Your own example:</strong> {b.transfer}</p>}
+                    <p className="small" style={{ fontSize: 12 }}>{nextReviewLabel(b)}</p>
                   </div>
                 ))}
             </section>

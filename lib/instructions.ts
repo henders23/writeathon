@@ -11,6 +11,8 @@ PRINCIPLES
 - Every quote you give MUST be copied exactly, character for character, from the student's paragraph (the app highlights it), and should be a whole sentence or a clear clause.
 - If the paragraph uses the source, check paraphrasing: an unmarked copied string of four or more words from the source is a gap in Sources. Practice sources are attributed to fictional authors; that is expected, so cite them normally.
 - Ignore spelling slips that do not affect meaning, unless they are systematic.
+- Judge the paragraph by the conventions of the student's DISCIPLINE and the GENRE and READER given. Disciplines differ: "I argue" is normal in many humanities and social science genres but unusual in a science results section; passive voice, hedging norms, how much to define terms, and how evidence is used all vary. Never impose one register on every discipline. A non-specialist reader needs key terms explained; a specialist reader does not.
+- Where it matters, comment on fit to genre and reader (e.g. a briefing for a council should lead with the recommendation).
 
 THE PATTERN: five areas.
 ${ROW_IDS.map((r) => `- ${r} (${ROWS[r].label}): ${ROWS[r].rubric}`).join("\n")}
@@ -168,3 +170,48 @@ export const SURGERY_CHECK_INSTRUCTIONS = `A student combined some short sentenc
 
 ok = true if: it is one grammatical sentence; it keeps all the important information from the short sentences; it reads as natural academic English. Using the suggested technique is NOT required; any good combination counts. Small slips (a missing article) can still be ok, but mention them.
 comment: one short, encouraging sentence in plain British English saying what worked or what to fix.`;
+
+/* ---------- Transfer: use the pattern somewhere new ---------- */
+
+export const TRANSFER_INSTRUCTIONS = `A student has fixed a sentence after seeing a model version. To show they have learned the pattern (not just copied it), they must now write ONE new sentence that uses the same pattern on a clearly different topic.
+
+ok = true only if: the sentence uses the target pattern correctly; it is about a different topic from the original sentence; it is not a copy or near-copy of the model or the example pattern; it is grammatical and makes sense.
+comment: one short, encouraging sentence in plain British English. If ok is false, say what is missing (e.g. "That's the same topic as your paragraph. Try the pattern on something else, like your own course.").`;
+
+/* ---------- Revision day ---------- */
+
+export const REVISION_INSTRUCTIONS = `A university student (English B1-C1) has revised a whole academic paragraph they wrote earlier in the week. Expert writers revise ideas and structure, not just words (Sommers): this exercise is meant to build that habit.
+
+Compare the ORIGINAL and the REVISED paragraph and list what changed, classifying each change by level:
+- idea: the argument or content changed (a clearer or different claim, new evidence or example, a counterargument added, the "so what" developed, irrelevant content removed).
+- structure: the order or shape changed (sentences reordered, a topic sentence added or rewritten to control the paragraph, a missing move added, a concluding sentence added).
+- sentence: a sentence was combined, split or rebuilt for clarity, without changing the idea.
+- word: individual words, grammar, spelling or punctuation changed.
+
+Return:
+- summary: one encouraging sentence about the revision.
+- changes: up to 6 of the most significant changes, most important first, each with level and a short description quoting briefly where useful.
+- deeper: true if at least one change is at idea or structure level.
+- nextStep: one sentence suggesting a further idea- or structure-level revision they could still make, judged against the task, genre and reader given.
+
+Be specific, honest and kind. Plain British English.`;
+
+export const REVISION_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["summary", "changes", "deeper", "nextStep"],
+  properties: {
+    summary: str,
+    changes: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["level", "what"],
+        properties: { level: { type: "string", enum: ["idea", "structure", "sentence", "word"] }, what: str },
+      },
+    },
+    deeper: { type: "boolean" },
+    nextStep: str,
+  },
+} as const;

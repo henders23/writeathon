@@ -10,7 +10,8 @@ import Stepper from "@/components/Stepper";
 import { useSessionFeedback } from "@/components/useSessionFeedback";
 import { ROWS, TARGET_WORDS } from "@/lib/content";
 import { clearFeedbackError, requestFeedback } from "@/lib/feedbackRunner";
-import { MILESTONES, counts, currentStreak } from "@/lib/progress";
+import { MILESTONES, areasShownWell, counts, currentStreak, lastAttempt } from "@/lib/progress";
+import { parseDay } from "@/lib/dates";
 import { useAppState } from "@/lib/store";
 
 export default function FeedbackPage() {
@@ -37,6 +38,9 @@ export default function FeedbackPage() {
   const mins = Math.floor(session.writeSeconds / 60);
   const secs = session.writeSeconds % 60;
   const inRange = session.words >= TARGET_WORDS.min;
+  const prev = lastAttempt(state.sessions, session.promptId, session.date);
+  const prevAreas = prev ? areasShownWell(prev) : null;
+  const nowAreas = areasShownWell(session);
 
   return (
     <main className="shell">
@@ -85,6 +89,29 @@ export default function FeedbackPage() {
               Try again
             </button>
           </div>
+        )}
+
+        {fb && prev && (
+          <section className="card amber tight" aria-label="Compared with your last attempt">
+            <span className="eyebrow amber">Same question, {parseDay(prev.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })} vs today</span>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div className="stack gap-2">
+                <span className="small">Then</span>
+                <span className="serif" style={{ fontSize: 20 }}>{prev.words} words</span>
+                {prevAreas !== null && <span className="small">{prevAreas} of 5 areas shown well</span>}
+              </div>
+              <div className="stack gap-2">
+                <span className="small" style={{ color: "var(--amber-deep)", fontWeight: 600 }}>Now</span>
+                <span className="serif" style={{ fontSize: 20 }}>{session.words} words</span>
+                {nowAreas !== null && <span className="small">{nowAreas} of 5 areas shown well</span>}
+              </div>
+            </div>
+            <p className="small" style={{ color: "var(--amber-deep)" }}>
+              {nowAreas !== null && prevAreas !== null && nowAreas > prevAreas
+                ? "More areas shown well than last time. You beat your last attempt."
+                : "Repeating a task is one of the surest ways to improve. Compare the two and see what changed."}
+            </p>
+          </section>
         )}
 
         {fb && (
