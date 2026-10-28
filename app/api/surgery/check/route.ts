@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       instructions: SURGERY_CHECK_INSTRUCTIONS,
       input: `SHORT SENTENCES:\n${b.sentences.map((s) => `- ${s}`).join("\n")}\nSUGGESTED TECHNIQUE: ${b.technique ?? ""}\nA MODEL ANSWER: ${b.model ?? ""}\nSTUDENT'S SENTENCE: ${attempt}`,
       schemaName: "surgery_check",
+      fast: true,
       schema: REWRITE_SCHEMA,
     });
     return Response.json(verdict);

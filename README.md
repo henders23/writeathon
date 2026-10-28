@@ -44,29 +44,29 @@ Students learn more from revising than from drafting, so the key moment is the *
 
 ## Where data lives
 
-Everything about a student is stored in their own browser (`localStorage`). There are no accounts yet. Paragraphs are sent to OpenAI to write the feedback.
+Everything about a student is stored in their own browser (`localStorage`). There are no accounts yet. Paragraphs are sent to the AI provider you configure (Claude or OpenAI) to write the feedback.
 
 ## Deploying on Vercel
 
 1. In Vercel, **Add New → Project** and import `henders23/writeathon`. The defaults (Next.js) are right.
 2. Under **Settings → Environment Variables**, add:
-   - `OPENAI_API_KEY`: required.
+   - `ANTHROPIC_API_KEY`: your Claude API key (create one at [platform.claude.com](https://platform.claude.com) → Settings → API keys). Or set `OPENAI_API_KEY` instead to use OpenAI. If both are set, Claude is used; `AI_PROVIDER=openai` forces OpenAI.
    - `ACCESS_CODE`: strongly recommended before sharing the link.
 3. Deploy.
 
-Optional: `OPENAI_FEEDBACK_MODEL` (default `gpt-6-luna`). All AI calls are text-only, so they cost far less than Speakathon's live voice.
+Optional model overrides: `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`, used for feedback, rewrite checks, revision and game generation) and `ANTHROPIC_FAST_MODEL` (default `claude-haiku-5-5`, used for Sentence Surgery checks); for OpenAI, `OPENAI_FEEDBACK_MODEL` (default `gpt-6-luna`). All AI calls are text-only, so they cost far less than Speakathon's live voice. On Claude, JSON comes back through structured outputs (`output_config.format`), so feedback always matches the app's schema.
 
 To demo the Pattern, Bank and recap screens without three weeks of practice, open the profile (initials, top right) and choose **Load sample history**.
 
 ## Running locally
 
 ```bash
-cp .env.example .env.local   # add your OPENAI_API_KEY
+cp .env.example .env.local   # add your ANTHROPIC_API_KEY (or OPENAI_API_KEY)
 npm install
 npm run dev
 ```
 
-For offline testing you can point `OPENAI_BASE_URL` at a mock of the Responses API.
+For offline testing you can point `ANTHROPIC_BASE_URL` (or `OPENAI_BASE_URL`) at a mock API.
 
 ## How it fits together
 
