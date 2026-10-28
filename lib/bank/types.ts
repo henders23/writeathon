@@ -35,6 +35,11 @@ export type DailyPrompt = {
   text: string; // the instruction the student sees
   frame?: Frame;
   source?: Source;
+  /**
+   * Further genuine extracts on the same question (from different articles), so the student can
+   * choose to draw on 2 or 3 sources and practise synthesis. Each follows the same rules as `source`.
+   */
+  more?: Source[];
   /** Warm-up tasks are short and accessible: the first sessions use them. */
   warmup?: boolean;
 };

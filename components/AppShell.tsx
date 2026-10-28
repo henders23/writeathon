@@ -30,7 +30,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app">
       <header className="topbar">
-        <Link href="/" className="wordmark">Writeathon</Link>
+        <Link href="/" className="brand" aria-label="Writeathon, by Paul Hendrie, home">
+          <span className="wordmark">Writeathon</span>
+          <span className="byline">By Paul Hendrie</span>
+        </Link>
         <nav className="nav" aria-label="Main">
           {NAV.map((n) => {
             const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
@@ -68,7 +71,10 @@ export function SessionShell({ step, children, label }: { step: number; children
   return (
     <div className="app">
       <header className="topbar">
-        <Link href="/" className="wordmark">Writeathon</Link>
+        <Link href="/" className="brand" aria-label="Writeathon, by Paul Hendrie, home">
+          <span className="wordmark">Writeathon</span>
+          <span className="byline">By Paul Hendrie</span>
+        </Link>
         <nav className="steps" aria-label="Session steps">
           {SESSION_STEPS.map((s, i) => (
             <span key={s} className={i < step ? "done" : i === step ? "now" : ""} aria-current={i === step ? "step" : undefined}>

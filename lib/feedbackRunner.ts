@@ -24,6 +24,7 @@ export function requestFeedback(sessionId: string): Promise<void> {
         frame: s.frame,
         promptText: s.promptText,
         source: s.source,
+        sources: s.sources,
         focusId: s.focusId,
         mode: s.mode,
         plan: s.plan,

@@ -9,13 +9,13 @@ import Loading from "@/components/Loading";
 import Marked from "@/components/Marked";
 import RewriteIt from "@/components/RewriteIt";
 import { useSessionFeedback } from "@/components/useSessionFeedback";
-import { MOVES, REQUEST_LABEL, ROWS, TARGET_WORDS, WARMUP_WORDS, type MoveId } from "@/lib/content";
+import { BANDS, CRITERIA, MOVES, REQUEST_LABEL, ROWS, targetFor, type Band, type MoveId } from "@/lib/content";
 import { parseDay } from "@/lib/dates";
 import { clearFeedbackError, requestFeedback } from "@/lib/feedbackRunner";
 import { splitSentences } from "@/lib/match";
 import { MILESTONES, areasShownWell, counts, currentStreak, lastAttempt } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
-import type { Feedback, SentenceNote, Session } from "@/lib/types";
+import type { CriterionResult, Feedback, SentenceNote, Session } from "@/lib/types";
 
 const moveLabel = (m: string) => MOVES[m as MoveId]?.label ?? m;
 
@@ -58,7 +58,8 @@ export default function FeedbackPage() {
   const streak = currentStreak(state.profile, state.sessions);
   const next = MILESTONES.find((m) => m.days > streak);
   const fb = session.feedback;
-  const target = session.warmup ? WARMUP_WORDS : TARGET_WORDS;
+  const nSources = session.sources?.length ?? (session.source ? 1 : 0);
+  const target = targetFor(session.warmup, Math.max(1, nSources));
   const mins = Math.floor(session.writeSeconds / 60);
   const secs = session.writeSeconds % 60;
   const prev = lastAttempt(state.sessions, session.promptId, session.date);
@@ -99,6 +100,8 @@ export default function FeedbackPage() {
           </div>
         )}
 
+        {fb && (fb.readerEffect || (fb.effectiveness?.length ?? 0) > 0) && <Effectiveness fb={fb} sources={nSources} />}
+
         {fb && (
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 360px", gap: 24, alignItems: "start" }} className="fb-grid">
             <section className="panel" style={{ padding: "16px 28px 24px" }} aria-labelledby="margins-h">
@@ -107,7 +110,7 @@ export default function FeedbackPage() {
                 <span className="legend">
                   <span><span className="swatch" style={{ background: "var(--chart-blue)" }} />Went well</span>
                   {fb.workOn && <span><span className="swatch" style={{ background: "var(--chart-amber)" }} />Rewrite this one</span>}
-                  <span><span className="swatch" style={{ background: "var(--line-2)" }} />What it does</span>
+                  <span><span className="swatch" style={{ background: "var(--line-2)" }} />What it does, and how well</span>
                 </span>
               </div>
               {rowsFor(session, fb).map((r, i) => {
@@ -115,7 +118,10 @@ export default function FeedbackPage() {
                 const isUnsure = unsureText && (r.text === unsureText || r.text.includes(unsureText) || unsureText.includes(r.text));
                 return (
                   <div key={i} className={`margin-row${isWork ? " work" : ""}`}>
-                    <span className="move-tag">{moveLabel(r.move)}</span>
+                    <span className="move-tag stack g4" style={{ alignItems: "flex-end" }}>
+                      {moveLabel(r.move)}
+                      {r.effect && <EffectDots effect={r.effect} />}
+                    </span>
                     <div className="stack g10">
                       <p className="sentence" data-dict={session.topic}>
                         <span className={r.kind === "strength" ? "hl-strength" : isWork && session.banked ? "hl-work" : undefined}>{r.text}</span>
@@ -153,6 +159,12 @@ export default function FeedbackPage() {
             </section>
 
             <aside className="stack g16">
+              {fb.movesComment && (
+                <section className="card" aria-labelledby="moves-h">
+                  <h2 id="moves-h" className="eyebrow">Your moves</h2>
+                  <span className="body" style={{ fontSize: 14 }}>{fb.movesComment}</span>
+                </section>
+              )}
               {(fb.requestAnswers?.length ?? 0) > 0 && (
                 <section className="card" aria-labelledby="asked-h">
                   <h2 id="asked-h" className="eyebrow">You asked about</h2>
@@ -290,3 +302,75 @@ function PlanVsParagraph({ session, rows }: { session: Session; rows: SentenceNo
   );
 }
 
+
+const EFFECT_LABEL = { strong: "Does its job well", partial: "Partly does its job", weak: "Doesn’t yet do its job" } as const;
+
+function EffectDots({ effect }: { effect: "strong" | "partial" | "weak" }) {
+  const n = effect === "strong" ? 3 : effect === "partial" ? 2 : 1;
+  return (
+    <span className="dots" title={EFFECT_LABEL[effect]} aria-label={EFFECT_LABEL[effect]}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={i < n ? "on" : ""} style={i < n && effect === "weak" ? { background: "var(--chart-amber)" } : undefined} />
+      ))}
+    </span>
+  );
+}
+
+const SCALE = BANDS.filter((b) => b !== "A2");
+
+function BandScale({ band }: { band: Band }) {
+  if (band === "n/a") return <span className="pill grey">Not tested</span>;
+  const idx = SCALE.indexOf(band as (typeof SCALE)[number]);
+  return (
+    <span className="row g8" aria-label={`Indicative CEFR level ${band}`}>
+      <span style={{ display: "inline-grid", gridTemplateColumns: `repeat(${SCALE.length}, 14px)`, gap: 2 }} aria-hidden="true">
+        {SCALE.map((b, i) => (
+          <span key={b} title={b} style={{ height: 8, borderRadius: 2, background: i <= idx ? "var(--chart-blue)" : "var(--line)" }} />
+        ))}
+      </span>
+      <strong style={{ fontSize: 14, minWidth: 30 }}>{band === "A2" ? "A2" : band}</strong>
+    </span>
+  );
+}
+
+function Effectiveness({ fb, sources }: { fb: Feedback; sources: number }) {
+  const rows = (fb.effectiveness ?? []).filter((c) => CRITERIA[c.criterion] && !(c.criterion === "synthesis" && sources < 2 && c.band === "n/a"));
+  const order = (c: CriterionResult) => Object.keys(CRITERIA).indexOf(c.criterion);
+  rows.sort((a, b) => order(a) - order(b));
+  return (
+    <section className="panel" style={{ padding: 24, display: "grid", gridTemplateColumns: "minmax(0, 0.8fr) minmax(0, 1.6fr)", gap: 28 }} aria-labelledby="eff-h">
+      <div className="stack g12">
+        <h2 id="eff-h" className="eyebrow">How well it works</h2>
+        {fb.readerEffect && <p className="lead" style={{ color: "var(--ink)" }} data-dict="Feedback">{fb.readerEffect}</p>}
+        <span className="small">
+          Judged on effectiveness first: does the paragraph do its job for its reader? Language counts as far as it helps or blocks meaning.
+          Levels are indicative, from one paragraph, aligned to the CEFR Companion Volume (2020).
+        </span>
+      </div>
+      {rows.length > 0 && (
+        <table className="table-view" style={{ fontSize: 14 }}>
+          <caption className="sr-only">Effectiveness profile with indicative CEFR levels</caption>
+          <thead>
+            <tr>
+              <th scope="col">Criterion</th>
+              <th scope="col">Indicative level</th>
+              <th scope="col">What this paragraph shows</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c.criterion} style={CRITERIA[c.criterion].language ? { color: "var(--ink-3)" } : undefined}>
+                <td style={{ verticalAlign: "top", width: 190 }}>
+                  <strong style={{ color: "var(--ink)" }}>{CRITERIA[c.criterion].label}</strong>
+                  <div className="small" style={{ fontSize: 11.5 }}>CEFR: {CRITERIA[c.criterion].cefr}</div>
+                </td>
+                <td style={{ verticalAlign: "top", width: 150 }}><BandScale band={c.band} /></td>
+                <td style={{ verticalAlign: "top" }} data-dict="Feedback">{c.comment}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}

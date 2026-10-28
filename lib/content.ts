@@ -136,7 +136,7 @@ export const SURGERY_SECONDS = 90;
 
 /* ---------- Paragraph moves (what each sentence does) ---------- */
 
-export const MOVE_IDS = ["claim", "define", "context", "summarise", "explain", "example", "evidence", "data", "concede", "counter", "sowhat", "recommend"] as const;
+export const MOVE_IDS = ["claim", "define", "context", "summarise", "explain", "example", "evidence", "data", "synthesise", "concede", "counter", "sowhat", "recommend"] as const;
 export type MoveId = (typeof MOVE_IDS)[number];
 
 export const MOVES: Record<MoveId, { label: string; does: string; group: "Open" | "Develop" | "Argue" | "Close" }> = {
@@ -148,6 +148,7 @@ export const MOVES: Record<MoveId, { label: string; does: string; group: "Open" 
   example: { label: "Example", does: "A concrete case", group: "Develop" },
   evidence: { label: "Evidence", does: "Use the source, with citation", group: "Develop" },
   data: { label: "Data", does: "A key figure and what it shows", group: "Develop" },
+  synthesise: { label: "Synthesise", does: "Show how the sources relate", group: "Argue" },
   concede: { label: "Concede", does: "Admit a limit or other view", group: "Argue" },
   counter: { label: "Counter", does: "Answer the other view", group: "Argue" },
   sowhat: { label: "So what", does: "Why it matters to the reader", group: "Close" },
@@ -182,7 +183,9 @@ export const TASK_OPENERS: Record<TaskId, MoveId[]> = {
 
 /* ---------- What students can ask feedback on ---------- */
 
-export const REQUESTS: { id: string; label: string; row: RowId; needsSource?: boolean }[] = [
+export const REQUESTS: { id: string; label: string; row: RowId; needsSource?: boolean; needsSources?: number }[] = [
+  { id: "effect", label: "Does it work for the reader?", row: "argument" },
+  { id: "moves", label: "My paragraph moves", row: "organisation" },
   { id: "view", label: "My main view", row: "argument" },
   { id: "support", label: "Supporting my point", row: "argument" },
   { id: "topic", label: "My first sentence", row: "organisation" },
@@ -190,6 +193,7 @@ export const REQUESTS: { id: string; label: string; row: RowId; needsSource?: bo
   { id: "ending", label: "My ending", row: "organisation" },
   { id: "source", label: "Using the source", row: "sources", needsSource: true },
   { id: "citing", label: "Citing", row: "sources", needsSource: true },
+  { id: "synthesis", label: "Combining the sources", row: "sources", needsSource: true, needsSources: 2 },
   { id: "words", label: "Academic words", row: "range" },
   { id: "register", label: "Sounding academic", row: "range" },
   { id: "grammar", label: "Grammar", row: "accuracy" },
@@ -198,3 +202,58 @@ export const REQUESTS: { id: string; label: string; row: RowId; needsSource?: bo
 export const REQUEST_LABEL: Record<string, string> = Object.fromEntries(REQUESTS.map((r) => [r.id, r.label]));
 
 export const WARMUP_WORDS = { min: 60, max: 100 };
+
+/* ---------- How many sources ---------- */
+
+/** Word targets and writing time grow a little with each extra source to synthesise. */
+export function targetFor(warmup: boolean | undefined, sources: number) {
+  const base = warmup ? WARMUP_WORDS : TARGET_WORDS;
+  const extra = Math.max(0, sources - 1);
+  return { min: base.min + extra * 30, max: base.max + extra * 40, seconds: WRITE_SECONDS + extra * 60 };
+}
+
+/* ---------- Effectiveness criteria (aligned to the CEFR Companion Volume, 2020) ---------- */
+
+export const CRITERION_IDS = ["task", "moves", "coherence", "sources", "synthesis", "precision", "language"] as const;
+export type CriterionId = (typeof CRITERION_IDS)[number];
+export const BANDS = ["A2", "B1", "B1+", "B2", "B2+", "C1", "C2"] as const;
+export type Band = (typeof BANDS)[number] | "n/a";
+
+export const CRITERIA: Record<CriterionId, { label: string; cefr: string; asks: string; language?: boolean }> = {
+  task: {
+    label: "Task and argument",
+    cefr: "Written production: reports and essays · Thematic development",
+    asks: "Does the paragraph answer the question for its reader, with a clear point that is developed with reasons, examples or evidence?",
+  },
+  moves: {
+    label: "Paragraph moves",
+    cefr: "Thematic development",
+    asks: "Does each sentence do a clear job, in an order that builds the point from opening to ‘so what’?",
+  },
+  coherence: {
+    label: "Coherence and cohesion",
+    cefr: "Coherence and cohesion",
+    asks: "Do the ideas connect, so the reader can follow the line of thought without effort?",
+  },
+  sources: {
+    label: "Using sources",
+    cefr: "Mediation: processing text in writing",
+    asks: "Is the source understood, put in the writer’s own words, cited, and used to support the writer’s point rather than replace it?",
+  },
+  synthesis: {
+    label: "Synthesis",
+    cefr: "Reports and essays: synthesising information and arguments from a number of sources",
+    asks: "Are the sources related to each other (agreeing, contrasting, qualifying, building on) to make the writer’s own point, rather than reported one after another?",
+  },
+  precision: {
+    label: "Precision and stance",
+    cefr: "Propositional precision",
+    asks: "Are claims as strong as the evidence allows, with nuance and the writer’s stance clear?",
+  },
+  language: {
+    label: "Language for the job",
+    cefr: "Vocabulary range · Grammatical accuracy",
+    asks: "Do words and grammar carry the meaning clearly in an academic register? (Judged by effect on the reader, not by error count.)",
+    language: true,
+  },
+};

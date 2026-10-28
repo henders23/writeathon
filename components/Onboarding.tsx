@@ -41,7 +41,10 @@ export default function Onboarding() {
   return (
     <div className="app">
       <header className="topbar">
-        <span className="wordmark">Writeathon</span>
+        <span className="brand">
+          <span className="wordmark">Writeathon</span>
+          <span className="byline">By Paul Hendrie</span>
+        </span>
         <div className="topbar-right">
           <span className="small">Getting started · {step} of 2</span>
           <ThemeToggle />
@@ -141,7 +144,7 @@ export default function Onboarding() {
 export function HowFeedback({ standalone = false }: { standalone?: boolean }) {
   const steps = [
     { n: 1, t: "You choose what to ask about", d: "After writing, pick up to two things you want feedback on, and the sentence you’re least sure of." },
-    { n: 2, t: "Notes appear in the margin", d: "Each sentence is labelled with what it does. Blue marks what went well; amber marks the one sentence to improve." },
+    { n: 2, t: "Notes appear in the margin", d: "Each sentence is labelled with its move and how well it does its job. A profile shows how effective the whole paragraph is, with CEFR-aligned levels." },
     { n: 3, t: "You rewrite one sentence", d: "You fix it yourself. Stuck? Ask for help in steps: a clue, then the pattern, then a version. Take only what you need." },
     { n: 4, t: "You bank it, and it comes back", d: "Fixed sentences return for you to fix again from memory after 1, 3, 7, 14 and 30 days, until they’re yours." },
   ];
@@ -163,11 +166,11 @@ export function HowFeedback({ standalone = false }: { standalone?: boolean }) {
       <div className="grid2">
         <div className="card blue">
           <span className="eyebrow blue">What feedback will do</span>
-          <span className="body" style={{ color: "var(--blue-strong)" }}>Answer what you asked about · quote your own words · suit your subject and reader · show you a model paragraph to compare with · track your growth across five areas</span>
+          <span className="body" style={{ color: "var(--blue-strong)" }}>Judge how well your writing works for its reader: your argument, your moves, how ideas connect, how you use and combine sources · answer what you asked about · quote your own words · show a model paragraph to compare with</span>
         </div>
         <div className="card amber">
           <span className="eyebrow amber">What it won’t do</span>
-          <span className="body" style={{ color: "var(--amber-deep)" }}>Rewrite your paragraph for you · mark every small error · give you a grade</span>
+          <span className="body" style={{ color: "var(--amber-deep)" }}>Rewrite your paragraph for you · mark every small language error · give you a grade (CEFR levels are indicative, to show growth)</span>
         </div>
       </div>
       {standalone && (

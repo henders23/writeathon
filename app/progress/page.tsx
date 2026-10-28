@@ -10,6 +10,9 @@ import { FOCUS_BY_ID, ROWS, ROW_IDS } from "@/lib/content";
 import { parseDay } from "@/lib/dates";
 import {
   areasThenNow,
+  criteriaThenNow,
+  levelLabel,
+  LEVELS,
   fluencySeries,
   focusGrid,
   headline,
@@ -34,6 +37,9 @@ export default function ProgressPage() {
 
   const h = headline(state);
   const areas = areasThenNow(sessions);
+  const crit = criteriaThenNow(sessions);
+  const levelScale = { ticks: LEVELS.map((l, i) => ({ v: i / (LEVELS.length - 1), label: l })), fmt: (v: number) => levelLabel(v * (LEVELS.length - 1)) };
+  const toUnit = (v: number | null) => (v === null ? null : Math.max(0, v) / (LEVELS.length - 1));
   const status = Object.fromEntries(patternRows(profile, sessions).map((r) => [r.row, r.status]));
   const sn = strengthsAndNext(sessions);
   const flu = fluencySeries(sessions);
@@ -114,6 +120,40 @@ export default function ProgressPage() {
         )}
 
         <div className="grid3" style={{ alignItems: "start" }}>
+          {crit.rows.length > 0 && (
+            <ChartCard
+              span={2}
+              title="How effective your writing is: then and now"
+              subtitle="Indicative CEFR-aligned levels for each criterion, averaged over your first paragraphs and your latest ones. Effectiveness first; language last."
+              legend={
+                <>
+                  <span><Swatch color="var(--chart-blue-light)" />Your first paragraphs</span>
+                  <span><Swatch color="var(--chart-blue)" />Your latest paragraphs</span>
+                </>
+              }
+              table={
+                <table className="table-view">
+                  <thead><tr><th>Criterion</th><th>Then</th><th>Now</th></tr></thead>
+                  <tbody>
+                    {crit.rows.map((r) => (
+                      <tr key={r.id}><td>{r.label}</td><td>{r.then === null ? "–" : levelLabel(r.then)}</td><td>{r.now === null ? "–" : levelLabel(r.now)}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              }
+            >
+              <Dumbbell label="Effectiveness criteria, then and now" scale={levelScale} rows={crit.rows.map((r) => ({ label: r.label, then: toUnit(r.then), now: toUnit(r.now) }))} />
+              <span className="small">Levels are indicative: each comes from one short timed paragraph, judged against CEFR Companion Volume (2020) scales for written production and mediation.</span>
+            </ChartCard>
+          )}
+          {crit.rows.length > 0 && (
+            <section className="card flat">
+              <span className="eyebrow">What “effective” means here</span>
+              <span className="body" style={{ fontSize: 14 }}>
+                Feedback judges how well your paragraph does its job for its reader: answering the question, making each move count, connecting ideas, using and combining sources, and making claims as strong as the evidence. Language matters as far as it helps or blocks that.
+              </span>
+            </section>
+          )}
           <ChartCard
             span={2}
             title="Your five areas: then and now"

@@ -1,7 +1,7 @@
 // Everything the progress dashboard shows, computed from the student's own saved work.
 
 import { languageMeasures } from "./coach";
-import { FOCUSES, MOVES, MOVE_IDS, REQUESTS, ROWS, ROW_IDS, type MoveId, type RowId } from "./content";
+import { CRITERIA, CRITERION_IDS, FOCUSES, MOVES, MOVE_IDS, REQUESTS, ROWS, ROW_IDS, type MoveId, type RowId } from "./content";
 import { splitSentences } from "./match";
 import { REVIEW_INTERVALS, bestStreak, counts, currentStreak, sessionsWithFeedback, wordsPerFive } from "./progress";
 import type { AppState, Session } from "./types";
@@ -161,3 +161,37 @@ export function requestsAndCalibration(sessions: Session[]) {
 }
 
 export const AREA_ORDER: RowId[] = [...ROW_IDS];
+
+/** CEFR-aligned levels as positions on a scale: B1 = 0 … C2 = 5. */
+export const LEVELS = ["B1", "B1+", "B2", "B2+", "C1", "C2"] as const;
+export function levelValue(band: string): number | null {
+  if (band === "A2") return -0.5;
+  const i = LEVELS.indexOf(band as (typeof LEVELS)[number]);
+  return i < 0 ? null : i;
+}
+export function levelLabel(v: number): string {
+  if (v < 0) return "A2";
+  return LEVELS[Math.max(0, Math.min(LEVELS.length - 1, Math.round(v)))];
+}
+
+/** Effectiveness criteria: average indicative level in the first paragraphs and the latest ones. */
+export function criteriaThenNow(sessions: Session[]) {
+  const fb = sessionsWithFeedback(sessions).filter((s) => s.mode !== "revise" && s.feedback!.effectiveness?.length);
+  const n = Math.min(5, Math.floor(fb.length / 2));
+  const avg = (xs: Session[], c: string) => {
+    const vals = xs
+      .map((s) => s.feedback!.effectiveness!.find((e) => e.criterion === c))
+      .map((e) => (e ? levelValue(e.band) : null))
+      .filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  return {
+    paragraphs: fb.length,
+    rows: CRITERION_IDS.map((c) => ({
+      id: c,
+      label: CRITERIA[c].label,
+      then: n >= 2 ? avg(fb.slice(0, n), c) : null,
+      now: avg(fb.slice(-Math.max(1, n)), c),
+    })).filter((r) => r.now !== null || r.then !== null),
+  };
+}

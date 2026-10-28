@@ -7,7 +7,7 @@ import type { Source } from "@/lib/bank/types";
 type Explained = { plain: string; keyWords: { word: string; meaning: string }[] };
 
 /** A genuine source extract with its full reference, and an optional plain-English helper. */
-export default function SourceCard({ source, compact = false, helper = true }: { source: Source; compact?: boolean; helper?: boolean }) {
+export default function SourceCard({ source, compact = false, helper = true, label }: { source: Source; compact?: boolean; helper?: boolean; label?: string }) {
   const [explained, setExplained] = useState<Explained | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function SourceCard({ source, compact = false, helper = true }: {
 
   return (
     <figure className="source">
-      <span className="eyebrow">{source.kind === "data" ? "Data" : "Source"} · {source.cite}</span>
+      <span className="eyebrow">{label ?? (source.kind === "data" ? "Data" : "Source")} · {source.cite}</span>
       <blockquote data-dict={source.cite} style={compact ? { fontSize: 15 } : undefined}>
         {source.own ? source.text : `“${source.text}”`}
       </blockquote>

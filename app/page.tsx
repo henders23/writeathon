@@ -23,6 +23,7 @@ import {
   sessionsWithFeedback,
   todaysChoices,
 } from "@/lib/progress";
+import { availableSources } from "@/lib/sources";
 import { saveProfile, useAppState } from "@/lib/store";
 
 export default function Today() {
@@ -188,7 +189,12 @@ export default function Today() {
 }
 
 function TopicCard({ prompt, last }: { prompt: DailyPrompt; last?: string }) {
-  const focusNote = prompt.source ? `Extract from ${prompt.source.cite}${prompt.source.journal ? `, ${prompt.source.journal}` : ""}` : "No source: your own ideas";
+  const n = availableSources(prompt).length;
+  const focusNote = !prompt.source
+    ? "No source: your own ideas"
+    : n > 1
+      ? `Up to ${n} sources, so you can practise synthesis · starts with ${prompt.source.cite}`
+      : `Extract from ${prompt.source.cite}${prompt.source.journal ? `, ${prompt.source.journal}` : ""}`;
   return (
     <article className="topic">
       <span className="eyebrow">{prompt.warmup ? "Warm-up · " : ""}{TASKS[prompt.task].label}</span>

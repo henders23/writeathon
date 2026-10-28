@@ -1,5 +1,7 @@
 # Writeathon
 
+*By Paul Hendrie*
+
 Ten minutes of academic writing a day, designed for a laptop. University students plan, write and revise one paragraph on a topic from their own subject, usually responding to a short extract from genuine open-access research. They choose what feedback they want, get notes in the margin of every sentence, rewrite the one sentence that matters most, and watch a detailed picture of their writing grow over time. It's the writing sibling of [Speakathon](https://github.com/henders23/speakathon).
 
 ## The pedagogy in one paragraph
@@ -15,6 +17,14 @@ Students learn more from planning and revising than from drafting, so the sessio
 | **Write** | Five minutes on a three-pane desk: task and source, the editor, and a live coach that ticks off planned moves sentence by sentence and tracks today's focus. Pasting is off and long copied strings from the source are flagged |
 | **Ask** | The student picks the sentence they're least sure of and up to two things to ask about (my main view, linking, citing, sounding academic, grammar…), plus an optional question of their own |
 | **Feedback & rewrite** | The paragraph sentence by sentence with move labels and margin notes, answers to their questions, plan vs paragraph, then vs now on a repeated question, a model paragraph to compare with (after rewriting), and the rewrite with stepped hints and banking |
+
+## Feedback on effectiveness, not just correctness
+
+Feedback judges first how well the paragraph **works for its reader**: whether it answers the question, whether each move does its job in a purposeful order, how ideas connect, how sources are used and (with two or three sources) synthesised, and whether claims are as strong as the evidence. Language is judged by its effect on meaning, not by error count. Each paragraph gets an effectiveness profile with an indicative level per criterion, aligned to the CEFR Companion Volume (2020) scales for written production and mediation (thematic development, coherence and cohesion, processing text in writing, synthesising information and arguments from a number of sources, propositional precision, and vocabulary range and grammatical accuracy). Each sentence is labelled with its move and how well it does its job. The progress dashboard tracks the profile over time.
+
+## One, two or three sources
+
+Before planning, students choose how many source extracts to draw on. One source means responding to it. Two or three mean synthesising: relating the sources to each other to make their own point. The plan gains a Synthesise move, the outline check and the live coach track every citation, the word target and writing time grow a little, and synthesis is assessed in the feedback. Students bringing their own material can add up to three extracts.
 
 ## Genuine sources
 

@@ -11,17 +11,16 @@ import Onboarding from "@/components/Onboarding";
 import SourceCard from "@/components/SourceCard";
 import type { DailyPrompt } from "@/lib/bank/types";
 import { focusSignal, outlineChecks, suggestShape } from "@/lib/coach";
+import { availableSources, chosenSources, isCited, synthesisLine } from "@/lib/sources";
 import {
   FOCUS_BY_ID,
   MOVES,
   MOVE_IDS,
   REQUESTS,
   ROWS,
-  TARGET_WORDS,
   TASKS,
   TASK_SHAPES,
-  WARMUP_WORDS,
-  WRITE_SECONDS,
+  targetFor,
   type MoveId,
 } from "@/lib/content";
 import { dayKey } from "@/lib/dates";
@@ -51,7 +50,7 @@ function useTicker(running: boolean) {
   return now;
 }
 
-type Draft = { topic: string; mode: string; date: string; stage: Stage; outline: OutlineStep[]; text: string; writeSeconds?: number };
+type Draft = { topic: string; mode: string; date: string; stage: Stage; outline: OutlineStep[]; text: string; writeSeconds?: number; nSources?: number };
 
 function readDraft(): Draft | null {
   try {
@@ -71,6 +70,7 @@ function SessionFlow() {
   const today = dayKey();
 
   const [stage, setStage] = useState<Stage>("plan");
+  const [nSources, setNSources] = useState(() => Math.max(1, Math.min(3, Number(params.get("n")) || 1)));
   const [outline, setOutline] = useState<OutlineStep[]>([]);
   const [text, setText] = useState("");
   const [writeStart, setWriteStart] = useState(() => Date.now());
@@ -101,6 +101,7 @@ function SessionFlow() {
       setOutline(d.outline);
       setText(d.text);
       setStage(d.stage);
+      if (d.nSources) setNSources(d.nSources);
       if (d.stage === "write") setWriteStart(Date.now() - (d.writeSeconds ?? 0) * 1000);
       if (d.writeSeconds) setWriteSeconds(d.writeSeconds);
     }
@@ -110,11 +111,11 @@ function SessionFlow() {
     if (!prompt || !restored.current) return;
     try {
       const ws = stage === "write" ? Math.floor((Date.now() - writeStart) / 1000) : writeSeconds;
-      window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ topic: prompt.id, mode, date: today, stage, outline, text, writeSeconds: ws }));
+      window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ topic: prompt.id, mode, date: today, stage, outline, text, writeSeconds: ws, nSources }));
     } catch {
       /* storage blocked */
     }
-  }, [prompt, mode, today, stage, outline, text, writeStart, writeSeconds]);
+  }, [prompt, mode, today, stage, outline, text, writeStart, writeSeconds, nSources]);
 
   useEffect(() => {
     if (mode === "hunt" && state?.profile && prompt && !huntItems) router.replace(`/hunt?topic=${encodeURIComponent(prompt.id)}`);
@@ -122,7 +123,11 @@ function SessionFlow() {
 
   const words = wordCount(text);
   const sentences = useMemo(() => splitSentences(text), [text]);
-  const copied = useMemo(() => (prompt?.source ? longestCopiedRun(text, prompt.source.text) : ""), [text, prompt]);
+  const sources = useMemo(() => (prompt ? chosenSources(prompt, nSources) : []), [prompt, nSources]);
+  const copied = useMemo(
+    () => sources.map((s) => longestCopiedRun(text, s.text)).sort((a, b) => b.split(" ").length - a.split(" ").length)[0] ?? "",
+    [text, sources],
+  );
   const copiedLong = copied.split(" ").length >= 6 ? copied : "";
 
   if (!state) return <Loading />;
@@ -142,10 +147,13 @@ function SessionFlow() {
 
   const focus = FOCUS_BY_ID[focusId];
   const task = TASKS[prompt.task];
-  const target = prompt.warmup ? WARMUP_WORDS : TARGET_WORDS;
+  const available = availableSources(prompt);
+  const target = targetFor(prompt.warmup, sources.length || 1);
+  const synth = synthesisLine(sources);
+  const maxMoves = MAX_MOVES + Math.max(0, sources.length - 1);
   const repeat = lastAttempt(state.sessions, prompt.id, today);
   const ids = outline.map((o) => o.move);
-  const checks = outlineChecks(prompt, ids);
+  const checks = outlineChecks(prompt, ids, sources);
   const label = mode === "hunt" ? "Phrase Hunt" : prompt.warmup ? "Warm-up" : task.label;
 
   function go(next: Stage) {
@@ -156,7 +164,7 @@ function SessionFlow() {
   }
 
   function addMove(m: MoveId) {
-    if (outline.length >= MAX_MOVES) return;
+    if (outline.length >= maxMoves) return;
     setOutline((o) => [...o, { move: m, note: "" }]);
   }
   function moveStep(i: number, d: -1 | 1) {
@@ -181,9 +189,10 @@ function SessionFlow() {
       promptId: prompt.id,
       task: prompt.task,
       topic: prompt.topic,
-      promptText: prompt.text,
+      promptText: synth ? `${prompt.text} ${synth}` : prompt.text,
       frame: prompt.frame,
       source: prompt.source,
+      sources: sources.length ? sources : undefined,
       warmup: prompt.warmup,
       focusId,
       plan: { claim: "", support: "", soWhat: "" },
@@ -215,23 +224,63 @@ function SessionFlow() {
         {label} · {prompt.topic}
       </span>
       <p className="prompt" style={{ fontSize: 28 }} data-dict="Writeathon task">{prompt.text}</p>
+      {synth && <p className="lead" style={{ maxWidth: 760 }} data-dict="Writeathon task">{synth}</p>}
       <span className="small">
-        One paragraph · {target.min}–{target.max} words{prompt.source ? ` · use ${prompt.source.cite}` : " · no source: your own ideas"}
+        One paragraph · {target.min}–{target.max} words · {Math.round(target.seconds / 60)} minutes
+        {sources.length ? ` · ${sources.length} source${sources.length === 1 ? "" : "s"}` : " · no source: your own ideas"}
       </span>
     </header>
   );
 
+  const sourcePicker = available.length > 0 && mode !== "hunt" && (
+    <section className="card" aria-labelledby="nsrc-h" style={{ maxWidth: 860, margin: "0 auto", width: "100%", flexDirection: "row", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <div className="stack g4 grow">
+        <h2 id="nsrc-h" className="h3">How many sources will you draw on?</h2>
+        <span className="small">
+          {available.length === 1
+            ? "This topic has one source. Topics marked ‘up to 3 sources’ on Today let you practise synthesis."
+            : "One source: respond to it. Two or three: synthesise them, showing how they agree, differ or build on each other. Each extra source adds about a minute."}
+        </span>
+      </div>
+      <div className="row g8" role="radiogroup" aria-labelledby="nsrc-h">
+        {[1, 2, 3].map((k) => (
+          <button
+            key={k}
+            role="radio"
+            aria-checked={sources.length === k}
+            className="chip"
+            aria-pressed={sources.length === k}
+            disabled={k > available.length}
+            title={k > available.length ? "Not available for this topic" : undefined}
+            onClick={() => {
+              setNSources(k);
+              if (k > 1 && outline.length && !outline.some((o) => o.move === "synthesise")) {
+                setOutline((o) => [...o.slice(0, Math.max(1, o.length - 1)), { move: "synthesise", note: "" }, ...o.slice(Math.max(1, o.length - 1))]);
+              }
+            }}
+          >
+            {k} source{k === 1 ? "" : "s"}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+
   const sourcePane = (
-    <aside className="stack g16" aria-label="The source">
-      {prompt.source ? (
+    <aside className="stack g16" aria-label={sources.length > 1 ? "The sources" : "The source"}>
+      {sources.length ? (
         <>
-          <span className="eyebrow">Today’s source</span>
+          <span className="eyebrow">{sources.length > 1 ? `Today’s ${sources.length} sources` : "Today’s source"}</span>
           <p className="small">
-            {prompt.source.own
+            {sources[0].own
               ? "Your own extract. Read it closely before you plan."
-              : `A short extract from real, open-access research${prompt.source.journal ? ` in ${prompt.source.journal}` : ""}. Read it first, then plan how you’ll use it.`}
+              : sources.length > 1
+                ? "Short extracts from real, open-access research. Read them all, and notice where they agree or differ, before you plan."
+                : `A short extract from real, open-access research${sources[0].journal ? ` in ${sources[0].journal}` : ""}. Read it first, then plan how you’ll use it.`}
           </p>
-          <SourceCard source={prompt.source} />
+          {sources.map((s, i) => (
+            <SourceCard key={s.cite + i} source={s} label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
+          ))}
         </>
       ) : (
         <div className="card flat">
@@ -248,7 +297,10 @@ function SessionFlow() {
     return (
       <SessionShell step={0} label={label}>
         <main className="stack g24" style={{ padding: "28px 0 40px" }}>
-          <div style={{ padding: "0 32px" }}>{taskHeader}</div>
+          <div className="stack g16" style={{ padding: "0 32px" }}>
+            {taskHeader}
+            {sourcePicker}
+          </div>
           <div className="desk" style={{ paddingTop: 0 }}>
             {sourcePane}
 
@@ -256,9 +308,9 @@ function SessionFlow() {
               <div className="row between wrap g8">
                 <div className="stack g4">
                   <h1 id="plan-h" className="h3" style={{ fontSize: 18 }}>Plan your paragraph’s moves</h1>
-                  <span className="small">What will each sentence do? Choose {prompt.warmup ? "3 to 5" : "3 to 6"} moves in order. Add a few words for each if you like.</span>
+                  <span className="small">What will each sentence do? Choose 3 to {maxMoves - (prompt.warmup ? 1 : 0)} moves in order. Add a few words for each if you like.</span>
                 </div>
-                <button className="btn secondary small" onClick={() => setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task]).map((m) => ({ move: m, note: "" })))}>
+                <button className="btn secondary small" onClick={() => setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], sources.length).map((m) => ({ move: m, note: "" })))}>
                   Suggest a shape
                 </button>
               </div>
@@ -295,13 +347,13 @@ function SessionFlow() {
               )}
 
               <div className="stack g12">
-                <span className="label">Add a move{outline.length >= MAX_MOVES ? " (outline full)" : ""}</span>
+                <span className="label">Add a move{outline.length >= maxMoves ? " (outline full)" : ""}</span>
                 <div className="grid4" style={{ gap: 12 }}>
                   {GROUPS.map((g) => (
                     <div key={g} className="stack g6">
                       <span className="eyebrow">{g}</span>
                       {MOVE_IDS.filter((m) => MOVES[m].group === g).map((m) => (
-                        <button key={m} className="move-btn" onClick={() => addMove(m)} disabled={outline.length >= MAX_MOVES}>
+                        <button key={m} className="move-btn" onClick={() => addMove(m)} disabled={outline.length >= maxMoves}>
                           <strong style={{ fontSize: 14 }}>{MOVES[m].label}</strong>
                           <span className="small" style={{ fontSize: 12 }}>{MOVES[m].does}</span>
                         </button>
@@ -337,7 +389,7 @@ function SessionFlow() {
                 <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{focus.why}</p>
               </section>
               <button className="btn block" onClick={() => go("write")} disabled={outline.length === 0}>
-                Start writing · 5 minutes
+                Start writing · {Math.round(target.seconds / 60)} minutes
               </button>
               {outline.length === 0 && (
                 <button className="text-btn" style={{ alignSelf: "center" }} onClick={() => go("write")}>Skip planning today</button>
@@ -352,7 +404,7 @@ function SessionFlow() {
   /* ---------- Write ---------- */
   if (stage === "write") {
     const elapsed = Math.floor((now - writeStart) / 1000);
-    const left = WRITE_SECONDS - elapsed;
+    const left = target.seconds - elapsed;
     const over = left < 0;
     const pct = Math.min(100, (words / target.max) * 100);
     const signal = focusSignal(focusId, text, prompt);
@@ -365,8 +417,11 @@ function SessionFlow() {
             <section className="card">
               <span className="eyebrow">The task</span>
               <p className="body" style={{ fontSize: 15, color: "var(--ink)" }} data-dict="Writeathon task">{prompt.text}</p>
+              {synth && <p className="body" style={{ fontSize: 14 }}>{synth}</p>}
             </section>
-            {prompt.source && <SourceCard source={prompt.source} compact />}
+            {sources.map((s, i) => (
+              <SourceCard key={s.cite + i} source={s} compact label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
+            ))}
           </aside>
 
           <section className="panel stack" style={{ minHeight: "calc(100dvh - 140px)", overflow: "hidden" }} aria-label="Your paragraph">
@@ -419,6 +474,24 @@ function SessionFlow() {
           </section>
 
           <aside className="stack g16 desk-right" aria-label="Writing coach">
+            {sources.length > 0 && (
+              <section className="card" aria-live="polite">
+                <span className="eyebrow">{sources.length > 1 ? "Sources cited" : "Source cited"}</span>
+                {sources.map((s, i) => {
+                  const c = isCited(text, s);
+                  return (
+                    <span key={i} className="row g8 body" style={{ fontSize: 14, color: c ? "var(--ink)" : "var(--muted)" }}>
+                      <span className={`mark ${c ? "done" : "todo"}`} aria-hidden="true" style={{ width: 20, height: 20 }}>{c ? <Check size={11} /> : ""}</span>
+                      {s.cite}
+                      <span className="sr-only">{c ? " cited" : " not cited yet"}</span>
+                    </span>
+                  );
+                })}
+                {sources.length > 1 && sources.every((s) => isCited(text, s)) && (
+                  <span className="small">All cited. Now check you’ve shown how they relate, not just what each says.</span>
+                )}
+              </section>
+            )}
             {outline.length > 0 && (
               <section className="card">
                 <span className="eyebrow">Your outline</span>
@@ -489,7 +562,7 @@ function SessionFlow() {
   }
 
   /* ---------- Ask ---------- */
-  const options = REQUESTS.filter((r) => !r.needsSource || prompt.source);
+  const options = REQUESTS.filter((r) => (!r.needsSource || sources.length > 0) && (!r.needsSources || sources.length >= r.needsSources));
   return (
     <SessionShell step={2} label={label}>
       <main className="container mid">

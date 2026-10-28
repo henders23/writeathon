@@ -73,7 +73,10 @@ function Tooltip({ tip }: { tip: Tip }) {
 }
 
 /** Then-vs-now dot plot: one row per category, a light dot for "then", a strong dot for "now". */
-export function Dumbbell({ rows }: { rows: { label: string; then: number | null; now: number | null; note?: string }[] }) {
+type Scale = { ticks: { v: number; label: string }[]; fmt: (v: number) => string };
+const PCT: Scale = { ticks: [0, 0.5, 1].map((v) => ({ v, label: `${Math.round(v * 100)}%` })), fmt: (v) => `${Math.round(v * 100)}%` };
+
+export function Dumbbell({ rows, scale = PCT, label = "Areas shown well, then and now" }: { rows: { label: string; then: number | null; now: number | null; note?: string }[]; scale?: Scale; label?: string }) {
   const [tip, setTip] = useState<Tip>(null);
   const W = 560;
   const L = 150;
@@ -82,16 +85,16 @@ export function Dumbbell({ rows }: { rows: { label: string; then: number | null;
   const x = (v: number) => L + v * (W - L - R);
   return (
     <div style={{ position: "relative" }}>
-      <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Areas shown well, then and now" onMouseLeave={() => setTip(null)}>
-        {[0, 0.5, 1].map((t) => (
-          <g key={t}>
-            <line x1={x(t)} x2={x(t)} y1={8} y2={H - 22} stroke="var(--chart-grid)" strokeWidth={1} />
-            <text x={x(t)} y={H - 6} fontSize={11} textAnchor="middle" fill="var(--muted)">{Math.round(t * 100)}%</text>
+      <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={label} onMouseLeave={() => setTip(null)}>
+        {scale.ticks.map((t) => (
+          <g key={t.v}>
+            <line x1={x(t.v)} x2={x(t.v)} y1={8} y2={H - 22} stroke="var(--chart-grid)" strokeWidth={1} />
+            <text x={x(t.v)} y={H - 6} fontSize={11} textAnchor="middle" fill="var(--muted)">{t.label}</text>
           </g>
         ))}
         {rows.map((r, i) => {
           const y = 24 + i * 40;
-          const text = `${r.label}: ${r.then !== null ? `then ${Math.round(r.then * 100)}%, ` : ""}now ${r.now !== null ? `${Math.round(r.now * 100)}%` : "not tested"}`;
+          const text = `${r.label}: ${r.then !== null ? `then ${scale.fmt(r.then)}, ` : ""}now ${r.now !== null ? scale.fmt(r.now) : "not tested"}`;
           return (
             <g key={r.label} onMouseEnter={() => setTip({ x: `${(x(r.now ?? r.then ?? 0) / W) * 100}%`, y: `${((y - 8) / H) * 100}%`, text })}>
               <rect x={0} y={y - 18} width={W} height={36} fill="transparent" />
@@ -106,7 +109,7 @@ export function Dumbbell({ rows }: { rows: { label: string; then: number | null;
                 <text x={L} y={y + 4} fontSize={12} fill="var(--muted)">Not tested yet</text>
               )}
               {r.now !== null && (
-                <text x={W - R + 8} y={y + 4} fontSize={12} fill="var(--ink-2)" fontWeight={600}>{Math.round(r.now * 100)}%</text>
+                <text x={W - R + 8} y={y + 4} fontSize={12} fill="var(--ink-2)" fontWeight={600}>{scale.fmt(r.now)}</text>
               )}
             </g>
           );

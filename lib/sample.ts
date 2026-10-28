@@ -1,12 +1,12 @@
 "use client";
 
 import { WARMUPS } from "./bank";
-import { FALLBACK_HUNT, ROW_IDS, type MoveId, type RowId } from "./content";
+import { FALLBACK_HUNT, ROW_IDS, type Band, type MoveId, type RowId } from "./content";
 import { addDays, dayKey } from "./dates";
 import { wordCount } from "./match";
 import { REVIEW_INTERVALS } from "./progress";
 import { getState, newId, update } from "./store";
-import type { BankItem, DictEntry, Evidence, Feedback, OutlineStep, QuizType, SentenceNote, Session, Strength, WorkOn } from "./types";
+import type { BankItem, CriterionResult, DictEntry, Evidence, Feedback, OutlineStep, QuizType, SentenceNote, Session, Strength, WorkOn } from "./types";
 
 // A believable three-week history so the Progress, Bank, Dictionary, recap and streak screens can be
 // demonstrated. The paragraphs answer the three warm-up tasks, so every quote and citation is coherent
@@ -169,6 +169,7 @@ const MOVE_NOTE: Record<MoveId, string> = {
   example: "Gives a concrete case.",
   evidence: "Uses the source as support.",
   data: "Reports a key figure.",
+  synthesise: "Shows how the sources relate.",
   concede: "Admits a limit to your view.",
   counter: "Answers the other view.",
   sowhat: "Says why it matters.",
@@ -221,6 +222,22 @@ function replay(start: string, results: boolean[], today: string, dict = false) 
   return { reviews, step, due };
 }
 
+const BAND_STEPS: Band[] = ["B1", "B1+", "B2", "B2+", "C1"];
+/** An effectiveness profile that develops over the sample weeks. */
+function sampleBands(i: number, n: number, topicPhase: boolean, hedgingGood: boolean, texts: string[]): CriterionResult[] {
+  const growth = Math.min(1, i / (n - 1));
+  const at = (start: number, gain: number) => BAND_STEPS[Math.max(0, Math.min(BAND_STEPS.length - 1, Math.round(start + gain * growth)))];
+  return [
+    { criterion: "task", band: topicPhase ? "B1+" : at(1, 2), comment: topicPhase ? "You answer the question, but only at the end." : "You answer the question directly and develop one clear reason.", quote: texts[0] },
+    { criterion: "moves", band: topicPhase ? "B1" : at(1, 2.4), comment: topicPhase ? "The opening move sets the scene instead of making a claim." : "Each sentence does a clear job in a sensible order.", quote: "" },
+    { criterion: "coherence", band: at(1, 2), comment: "Links like ‘However’ and ‘For this reason’ guide the reader.", quote: "" },
+    { criterion: "sources", band: at(0.6, 2), comment: i < 9 ? "You use the study, but the citation sits awkwardly." : "You put the study in your own words and use it as support.", quote: texts[1] ?? "" },
+    { criterion: "synthesis", band: "n/a", comment: "Only one source today.", quote: "" },
+    { criterion: "precision", band: hedgingGood ? "B2+" : at(0.5, 1.2), comment: hedgingGood ? "Your claims are now as strong as the evidence allows." : "One claim is stated as certain when one study can only suggest it.", quote: "" },
+    { criterion: "language", band: at(1.2, 1.6), comment: "Clear, accurate and academic enough for the reader; small slips don’t block meaning.", quote: "" },
+  ];
+}
+
 export function loadSampleHistory() {
   const today = dayKey();
   const profile = getState().profile;
@@ -269,6 +286,7 @@ export function loadSampleHistory() {
       text: t,
       move: p.moves[k],
       kind: k === workIdx ? "work" : strengthAt.has(k) ? "strength" : "none",
+      effect: k === workIdx ? (topicPhase ? "weak" : "partial") : strengthAt.has(k) ? "strong" : i > 10 ? "strong" : "partial",
       note: k === workIdx ? workOn.comment : strengthAt.get(k)?.comment ?? MOVE_NOTE[p.moves[k]],
     }));
 
@@ -307,6 +325,15 @@ export function loadSampleHistory() {
       sentences,
       requestAnswers: requests.map((r) => ({ request: r, answer: ANSWERS[r] })),
       modelParagraph: p.model,
+      readerEffect: topicPhase
+        ? "A reader learns useful facts, but has to wait until the end to find out what you think. Lead with your answer."
+        : hedgingGood
+          ? "A reader comes away with a clear, believable answer: your claims are now as strong as your evidence."
+          : "A reader can follow your argument easily, but one claim promises more than a single study can show.",
+      movesComment: topicPhase
+        ? "The middle moves work well, but the opening sets the scene instead of making your claim."
+        : "A purposeful sequence: claim, evidence, explanation and a ‘so what’ that answers the question.",
+      effectiveness: sampleBands(i, days.length, topicPhase, hedgingGood, texts),
     };
 
     const banked = i === 2 || i === 9 || i === 16;

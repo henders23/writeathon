@@ -1,5 +1,5 @@
 import type { DailyPrompt, Frame, Source, TaskId } from "./bank/types";
-import type { HuntItem, MoveId, RowId, SurgeryItem } from "./content";
+import type { Band, CriterionId, HuntItem, MoveId, RowId, SurgeryItem } from "./content";
 
 export type Evidence = "S" | "G" | "N"; // used well, gap noticed, not tested
 
@@ -19,7 +19,17 @@ export type HuntResult = { item: string; verdict: HuntVerdict; quote: string; no
 export type Transfer = { label: string; quote: string };
 
 /** One sentence of the student's paragraph, labelled with the move it performs. */
-export type SentenceNote = { text: string; move: MoveId; kind: "strength" | "work" | "none"; note: string };
+export type SentenceNote = {
+  text: string;
+  move: MoveId;
+  kind: "strength" | "work" | "none";
+  /** How well the sentence does its job (its move) for the reader. */
+  effect?: "strong" | "partial" | "weak";
+  note: string;
+};
+
+/** One criterion in the effectiveness profile, with an indicative CEFR level. */
+export type CriterionResult = { criterion: CriterionId; band: Band; comment: string; quote: string };
 
 export type Feedback = {
   summary: string;
@@ -36,6 +46,11 @@ export type Feedback = {
   sentences?: SentenceNote[];
   requestAnswers?: { request: string; answer: string }[];
   modelParagraph?: string;
+  /** How well the paragraph works for its reader, in a sentence or two. */
+  readerEffect?: string;
+  /** Comment on the sequence of moves as a whole. */
+  movesComment?: string;
+  effectiveness?: CriterionResult[];
 };
 
 export type Plan = { claim: string; support: string; soWhat: string };
@@ -62,7 +77,8 @@ export type Session = {
   topic: string;
   promptText: string;
   frame?: Frame;
-  source?: Source;
+  source?: Source; // the main source
+  sources?: Source[]; // every source the student chose to draw on (1–3), main source first
   warmup?: boolean;
   focusId: string;
   plan: Plan; // legacy three-note plan

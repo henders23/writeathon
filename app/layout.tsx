@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Writeathon",
-  description: "Ten minutes of academic writing a day.",
+  description: "Ten minutes of academic writing a day. By Paul Hendrie.",
+  authors: [{ name: "Paul Hendrie" }],
 };
 
 export const viewport: Viewport = {

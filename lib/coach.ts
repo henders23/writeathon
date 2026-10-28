@@ -1,13 +1,13 @@
 // Free, in-browser coaching: outline checks before writing, and live signals while writing.
 // The AI makes the real judgements afterwards; these just keep the student on track.
 
-import type { DailyPrompt } from "./bank/types";
+import type { DailyPrompt, Source } from "./bank/types";
 import { FOCUS_BY_ID, MOVES, TASK_OPENERS, type MoveId } from "./content";
 import { normalise, splitSentences } from "./match";
 
 export type Check = { ok: boolean; text: string };
 
-export function outlineChecks(prompt: DailyPrompt, ids: MoveId[]): Check[] {
+export function outlineChecks(prompt: DailyPrompt, ids: MoveId[], sources: Source[] = prompt.source ? [prompt.source] : []): Check[] {
   const reader = "your reader";
   const openers = TASK_OPENERS[prompt.task];
   const first = ids[0];
@@ -18,13 +18,22 @@ export function outlineChecks(prompt: DailyPrompt, ids: MoveId[]): Check[] {
       ? { ok: true, text: `You open with ${MOVES[first].label.toLowerCase()}, so ${reader} knows straight away where you’re going.` }
       : { ok: false, text: `Start with ${openers.map((m) => MOVES[m].label).join(" or ")}, so ${reader} knows your point first.` },
   );
-  if (prompt.source) {
+  if (sources.length === 1) {
     const uses = ids.some((m) => m === "evidence" || m === "summarise" || m === "data");
     checks.push(
       uses
-        ? { ok: true, text: `You plan to use ${prompt.source.cite}.` }
-        : { ok: false, text: `The task asks you to use ${prompt.source.cite}. Add Evidence${prompt.task === "data" ? " or Data" : " or Summarise"}.` },
+        ? { ok: true, text: `You plan to use ${sources[0].cite}.` }
+        : { ok: false, text: `The task asks you to use ${sources[0].cite}. Add Evidence${prompt.task === "data" ? " or Data" : " or Summarise"}.` },
     );
+  } else if (sources.length > 1) {
+    const sourceMoves = ids.filter((m) => m === "evidence" || m === "summarise" || m === "data").length;
+    const synth = ids.includes("synthesise");
+    checks.push(
+      synth
+        ? { ok: true, text: `You plan to bring your ${sources.length} sources together with a Synthesise move.` }
+        : { ok: false, text: `With ${sources.length} sources, add Synthesise: show how they agree, differ or build on each other, rather than reporting them one by one.` },
+    );
+    if (sourceMoves === 0) checks.push({ ok: false, text: "Add Evidence or Summarise so the reader knows what the sources say." });
   }
   if (prompt.task === "counter") {
     const both = ids.includes("concede") && ids.includes("counter");
@@ -35,7 +44,8 @@ export function outlineChecks(prompt: DailyPrompt, ids: MoveId[]): Check[] {
       ? { ok: true, text: "You end by saying why it matters." }
       : { ok: false, text: `Nothing yet says why this matters to ${reader}. End with So what or Recommend.` },
   );
-  const [lo, hi] = prompt.warmup ? [3, 5] : [3, 6];
+  const extra = Math.max(0, sources.length - 1);
+  const [lo, hi] = prompt.warmup ? [3, 5 + extra] : [3, 6 + extra];
   checks.push(
     ids.length >= lo && ids.length <= hi
       ? { ok: true, text: prompt.warmup ? "A good size for a short paragraph." : "A good size for one paragraph." }
@@ -45,7 +55,7 @@ export function outlineChecks(prompt: DailyPrompt, ids: MoveId[]): Check[] {
 }
 
 /** A typical shape for the task, adjusted so it uses the source when there is one. */
-export function suggestShape(prompt: DailyPrompt, shape: MoveId[]): MoveId[] {
+export function suggestShape(prompt: DailyPrompt, shape: MoveId[], nSources = prompt.source ? 1 : 0): MoveId[] {
   const out = [...shape];
   const usesSource = out.some((m) => m === "evidence" || m === "summarise" || m === "data");
   if (prompt.source && !usesSource) {
@@ -53,7 +63,8 @@ export function suggestShape(prompt: DailyPrompt, shape: MoveId[]): MoveId[] {
     if (ex >= 0) out[ex] = "evidence";
     else out.splice(Math.min(2, out.length - 1), 0, "evidence");
   }
-  return out.slice(0, prompt.warmup ? 5 : 6);
+  if (nSources > 1 && !out.includes("synthesise")) out.splice(Math.max(1, out.length - 1), 0, "synthesise");
+  return out.slice(0, (prompt.warmup ? 5 : 6) + Math.max(0, nSources - 1));
 }
 
 /* ---------- Live writing signals ---------- */

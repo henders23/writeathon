@@ -14,6 +14,7 @@ type Body = {
   frame?: Frame;
   promptText?: string;
   source?: Source;
+  sources?: Source[];
   focusId?: string;
   mode?: "write" | "hunt";
   plan?: Plan;
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
   const outline = (b.outline ?? []).slice(0, 8);
   const requests = (b.requests ?? []).slice(0, 2).map((r) => REQUEST_LABEL[r] ?? r);
   const note = (b.requestNote ?? "").trim().slice(0, 300);
-  const src = b.source;
+  const sources = (b.sources?.length ? b.sources : b.source ? [b.source] : []).slice(0, 3);
+  const srcLine = (src: Source, i: number) =>
+    `SOURCE ${i + 1} (${src.cite}${src.own ? ", the student's own source" : src.journal ? `, ${src.journal}` : ""}; cite it as ${src.cite}): ${src.text.slice(0, 1500)}`;
 
   const input = [
     `MODE: ${hunt.length ? "Phrase Hunt" : "Normal"}`,
@@ -53,9 +56,9 @@ export async function POST(req: Request) {
     b.frame ? `GENRE: ${b.frame.genre}. READER: ${b.frame.reader}.` : "",
     task ? `TASK TYPE: ${task.label}. A paragraph like this usually: ${task.moves.join("; ")}.` : "",
     `PROMPT: ${b.promptText}`,
-    src
-      ? `SOURCE (${src.cite}${src.own ? ", the student's own source" : `, ${src.journal}`}; cite it as ${src.cite}): ${src.text.slice(0, 2000)}`
-      : "SOURCE: none today",
+    sources.length
+      ? `NUMBER OF SOURCES THE STUDENT CHOSE TO USE: ${sources.length}${sources.length > 1 ? " (synthesis is assessed)" : " (synthesis is n/a)"}\n${sources.map(srcLine).join("\n")}`
+      : "SOURCES: none today (sources and synthesis are n/a)",
     `TODAY'S FOCUS: ${focus.id} (${focus.label}, area: ${focus.row})`,
     outline.length
       ? `STUDENT'S OUTLINE: ${outline.map((o, i) => `${i + 1}. ${MOVES[o.move as MoveId]?.label ?? o.move}${o.note ? ` (${o.note.slice(0, 80)})` : ""}`).join("; ")}`
@@ -88,6 +91,9 @@ export async function POST(req: Request) {
     fb.transfer = (fb.transfer ?? []).filter((t) => labels.has(t.label));
     fb.sentences = (fb.sentences ?? []).filter((x) => x.text?.trim());
     fb.requestAnswers = fb.requestAnswers ?? [];
+    fb.effectiveness = (fb.effectiveness ?? []).map((c) =>
+      (c.criterion === "synthesis" && sources.length < 2) || (c.criterion === "sources" && !sources.length) ? { ...c, band: "n/a" as const } : c,
+    );
     return Response.json(fb);
   } catch (e) {
     console.error("feedback failed", e);
