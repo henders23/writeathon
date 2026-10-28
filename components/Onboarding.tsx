@@ -11,7 +11,7 @@ import ThemeToggle from "./ThemeToggle";
 
 /** Two-step start: context and set-up, then how feedback works. */
 export default function Onboarding() {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [name, setName] = useState("");
   const [discipline, setDiscipline] = useState("");
   const [group, setGroup] = useState("");
@@ -46,48 +46,17 @@ export default function Onboarding() {
           <span className="byline">By Paul Hendrie</span>
         </span>
         <div className="topbar-right">
-          <span className="small">Getting started · {step} of 2</span>
+          {step > 0 && <span className="small">Getting started · {step} of 2</span>}
           <ThemeToggle />
         </div>
       </header>
-      {step === 1 ? (
-        <main className="container" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(0, 1fr)", gap: 40, paddingTop: 48 }}>
-          <section className="stack g24" aria-labelledby="welcome-h">
-            <div className="stack g14">
-              <h1 id="welcome-h" className="h1 xl">Ten minutes a day to become a confident academic writer.</h1>
-              <p className="lead" style={{ maxWidth: 620 }}>
-                Each day you write one short paragraph on a topic from your subject. You plan it, write it, ask for the feedback you want,
-                and rewrite one sentence. Small, regular practice builds skill faster than occasional long essays.
-              </p>
-            </div>
-            <div className="stack g12">
-              <h2 className="eyebrow">A session takes about ten minutes</h2>
-              <div className="timeline" role="img" aria-label="Session timeline: plan 2 minutes, write 5 minutes, feedback and rewrite 3 minutes">
-                <div><span style={{ background: "var(--chart-blue-light)" }} /><strong style={{ fontSize: 14 }}>Choose</strong><span className="small">30 s</span></div>
-                <div><span style={{ background: "var(--chart-blue-light)" }} /><strong style={{ fontSize: 14 }}>Plan</strong><span className="small">1–2 min</span></div>
-                <div><span style={{ background: "var(--blue)" }} /><strong style={{ fontSize: 14 }}>Write one paragraph</strong><span className="small">5 min</span></div>
-                <div><span style={{ background: "var(--amber)" }} /><strong style={{ fontSize: 14 }}>Feedback &amp; rewrite</strong><span className="small">3 min</span></div>
-              </div>
-            </div>
-            <div className="grid3">
-              <div className="card tight">
-                <strong>Real sources</strong>
-                <span className="body" style={{ fontSize: 14 }}>Short extracts from genuine open-access research in your subject, or a source of your own.</span>
-              </div>
-              <div className="card tight">
-                <strong>Your progress</strong>
-                <span className="body" style={{ fontSize: 14 }}>See your strengths grow across five areas of academic writing.</span>
-              </div>
-              <div className="card tight">
-                <strong>Your bank and dictionary</strong>
-                <span className="body" style={{ fontSize: 14 }}>Sentences you fix and words you collect come back, so the learning sticks.</span>
-              </div>
-            </div>
-          </section>
-
+      {step === 0 ? (
+        <StartScreen onStart={() => setStep(1)} />
+      ) : step === 1 ? (
+        <main className="container narrow" style={{ paddingTop: 40, maxWidth: 560 }}>
           <form
             className="panel stack g20"
-            style={{ padding: 32, alignSelf: "start" }}
+            style={{ padding: 32 }}
             onSubmit={(e) => {
               e.preventDefault();
               if (ready) setStep(2);
@@ -126,6 +95,7 @@ export default function Onboarding() {
             <button className="btn block" type="submit" disabled={!ready}>Continue</button>
             <p className="small">Your progress is saved in this browser. Your writing is sent to an AI (Claude) to write your feedback. It’s practice, not assessment.</p>
           </form>
+          <button className="text-btn" style={{ alignSelf: "center" }} onClick={() => setStep(0)}>← Back</button>
         </main>
       ) : (
         <main className="container">
@@ -137,6 +107,62 @@ export default function Onboarding() {
         </main>
       )}
     </div>
+  );
+}
+
+const STEPS = [
+  { icon: "plan", label: "Plan", time: "2 min" },
+  { icon: "write", label: "Write", time: "5 min" },
+  { icon: "improve", label: "Improve", time: "3 min" },
+] as const;
+
+function StepIcon({ kind }: { kind: (typeof STEPS)[number]["icon"] }) {
+  const common = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  if (kind === "plan")
+    return (
+      <svg {...common} stroke="var(--blue)">
+        <path d="M11 6h9M11 12h9M12 18h8M4 16a2 2 0 1 1 4 0c0 .6-.5 1-1 1.5L4 20h4M6 10V4L4 6" />
+      </svg>
+    );
+  if (kind === "write")
+    return (
+      <svg {...common} stroke="var(--blue)">
+        <path d="M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />
+      </svg>
+    );
+  return (
+    <svg {...common} stroke="var(--amber)">
+      <path d="M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-5l-5 3v-3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h12z" />
+    </svg>
+  );
+}
+
+/** The first screen anyone sees: what Writeathon is, in as few words as possible. */
+function StartScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <main className="start" aria-labelledby="start-h">
+      <h1 id="start-h" className="start-title">
+        Ten minutes.
+        <br />
+        One paragraph.
+        <br />
+        Every day.
+      </h1>
+      <p className="lead" style={{ textAlign: "center" }}>Academic writing practice that makes you a stronger writer.</p>
+      <ol className="start-steps" aria-label="Each session">
+        {STEPS.map((s) => (
+          <li key={s.label}>
+            <StepIcon kind={s.icon} />
+            <strong>{s.label}</strong>
+            <span className="small">{s.time}</span>
+          </li>
+        ))}
+      </ol>
+      <button className="btn" style={{ minWidth: 180 }} onClick={onStart} autoFocus>
+        Start <span aria-hidden="true">→</span>
+      </button>
+      <p className="small" style={{ textAlign: "center" }}>Real research · Feedback in the margins · Your progress, tracked</p>
+    </main>
   );
 }
 

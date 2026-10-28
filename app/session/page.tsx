@@ -150,6 +150,8 @@ function SessionFlow() {
   const available = availableSources(prompt);
   const target = targetFor(prompt.warmup, sources.length || 1);
   const synth = synthesisLine(sources);
+  // Keep any word range written into the task in step with the target for the number of sources.
+  const taskText = prompt.text.replace(/\(\d+–\d+ words\)/, `(${target.min}–${target.max} words)`);
   const maxMoves = MAX_MOVES + Math.max(0, sources.length - 1);
   const repeat = lastAttempt(state.sessions, prompt.id, today);
   const ids = outline.map((o) => o.move);
@@ -189,7 +191,7 @@ function SessionFlow() {
       promptId: prompt.id,
       task: prompt.task,
       topic: prompt.topic,
-      promptText: synth ? `${prompt.text} ${synth}` : prompt.text,
+      promptText: synth ? `${taskText} ${synth}` : taskText,
       frame: prompt.frame,
       source: prompt.source,
       sources: sources.length ? sources : undefined,
@@ -223,7 +225,7 @@ function SessionFlow() {
       <span className={`eyebrow${mode === "hunt" ? " amber" : ""}`}>
         {label} · {prompt.topic}
       </span>
-      <p className="prompt" style={{ fontSize: 28 }} data-dict="Writeathon task">{prompt.text}</p>
+      <p className="prompt" style={{ fontSize: 28 }} data-dict="Writeathon task">{taskText}</p>
       {synth && <p className="lead" style={{ maxWidth: 760 }} data-dict="Writeathon task">{synth}</p>}
       <span className="small">
         One paragraph · {target.min}–{target.max} words · {Math.round(target.seconds / 60)} minutes
@@ -267,15 +269,18 @@ function SessionFlow() {
   );
 
   const sourcePane = (
-    <aside className="stack g16" aria-label={sources.length > 1 ? "The sources" : "The source"}>
+    <aside className="stack g16" aria-label={sources.length > 1 ? "Your sources" : "Your source"}>
       {sources.length ? (
         <>
-          <span className="eyebrow">{sources.length > 1 ? `Today’s ${sources.length} sources` : "Today’s source"}</span>
+          <h2 className="sources-h">
+            <span className="count" aria-hidden="true">{sources.length}</span>
+            {sources.length > 1 ? `Your ${sources.length} sources` : "Your source"}
+          </h2>
           <p className="small">
             {sources[0].own
               ? "Your own extract. Read it closely before you plan."
               : sources.length > 1
-                ? "Short extracts from real, open-access research. Read them all, and notice where they agree or differ, before you plan."
+                ? `Short extracts from real, open-access research. Use all ${sources.length} in your paragraph: read them first, and notice where they agree or differ.`
                 : `A short extract from real, open-access research${sources[0].journal ? ` in ${sources[0].journal}` : ""}. Read it first, then plan how you’ll use it.`}
           </p>
           {sources.map((s, i) => (
@@ -416,9 +421,15 @@ function SessionFlow() {
           <aside className="stack g16" aria-label="Task and source">
             <section className="card">
               <span className="eyebrow">The task</span>
-              <p className="body" style={{ fontSize: 15, color: "var(--ink)" }} data-dict="Writeathon task">{prompt.text}</p>
+              <p className="body" style={{ fontSize: 15, color: "var(--ink)" }} data-dict="Writeathon task">{taskText}</p>
               {synth && <p className="body" style={{ fontSize: 14 }}>{synth}</p>}
             </section>
+            {sources.length > 0 && (
+              <h2 className="sources-h" style={{ fontSize: 22 }}>
+                <span className="count" aria-hidden="true">{sources.length}</span>
+                {sources.length > 1 ? `Use your ${sources.length} sources` : "Use your source"}
+              </h2>
+            )}
             {sources.map((s, i) => (
               <SourceCard key={s.cite + i} source={s} compact label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
             ))}

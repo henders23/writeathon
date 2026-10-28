@@ -10,6 +10,8 @@ Students learn more from planning and revising than from drafting, so the sessio
 
 ## The session
 
+New students see a minimal start screen (“Ten minutes. One paragraph. Every day.”, the three parts of a session, and Start), then a short set-up and a page on how feedback works.
+
 | Step | What happens |
 |---|---|
 | **Choose** | Three topics from the student's subject each day (or two short warm-ups for a new student), plus **Bring your own**: a question from their own module, or an extract they're reading |

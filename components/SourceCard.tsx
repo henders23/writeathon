@@ -25,7 +25,10 @@ export default function SourceCard({ source, compact = false, helper = true, lab
 
   return (
     <figure className="source">
-      <span className="eyebrow">{label ?? (source.kind === "data" ? "Data" : "Source")} · {source.cite}</span>
+      <span className="source-tag">
+        <span className="tag">{label ?? (source.kind === "data" ? "Data source" : "Source")}</span>
+        <span className="cite">{source.cite}</span>
+      </span>
       <blockquote data-dict={source.cite} style={compact ? { fontSize: 15 } : undefined}>
         {source.own ? source.text : `“${source.text}”`}
       </blockquote>
