@@ -3,16 +3,10 @@ import type { DailyPrompt } from "./types";
 export const LIFE_SCIENCES: DailyPrompt[] = [
   {
     id: "bio-01",
-    task: "respond",
+    task: "position",
     topic: "Model organisms in research",
-    text: "For the literature review in your dissertation, write one paragraph that summarises the main point of Haddad (2020) in your own words and says how far you agree that research on model organisms helps us understand human biology, giving one reason.",
+    text: "For the literature review in your dissertation, write one paragraph for your supervisor on how far research on model organisms such as mice, fruit flies and zebrafish helps us understand human biology, giving one reason.",
     frame: { genre: "Literature review for a dissertation", reader: "your dissertation supervisor" },
-    source: {
-      author: "Haddad",
-      year: 2020,
-      kind: "text",
-      text: "Much of what is known about human biology comes from a small number of model organisms, including mice, fruit flies and zebrafish. These species are cheap to keep, breed quickly and are well understood genetically. However, findings in them do not always transfer to humans, so results need to be interpreted with caution.",
-    },
   },
   {
     id: "bio-02",

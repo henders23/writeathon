@@ -52,14 +52,8 @@ export const PHYSICAL_SCIENCES: DailyPrompt[] = [
     id: "phys-04",
     task: "data",
     topic: "Temperature and reaction rate",
-    text: "In the results and discussion section of your lab report, write one paragraph that describes the results reported by Nakamura (2022) and explains what they suggest about how temperature affects the rate of a reaction.",
+    text: "In the results and discussion section of your lab report, describe one result you have measured or seen for how temperature changes the rate of a reaction, and explain in one paragraph what it suggests.",
     frame: { genre: "Results and discussion of a lab report", reader: "your lab demonstrator" },
-    source: {
-      author: "Nakamura",
-      year: 2022,
-      kind: "data",
-      text: "In a teaching laboratory, students timed how long a 2 cm strip of magnesium ribbon took to react completely with dilute hydrochloric acid at different temperatures. The reaction took 120 seconds at 20°C, 62 seconds at 30°C and 29 seconds at 40°C. Acid concentration was kept the same throughout.",
-    },
   },
   {
     id: "phys-05",
@@ -110,16 +104,10 @@ export const PHYSICAL_SCIENCES: DailyPrompt[] = [
   },
   {
     id: "phys-08",
-    task: "respond",
+    task: "position",
     topic: "Preprints and peer review",
-    text: "For an article in a student science magazine, write one paragraph that summarises the main point of Kowalczyk (2024) in your own words and says whether you think the benefits of preprints outweigh the risks, giving one reason.",
+    text: "For an article in a student science magazine, write one paragraph saying whether the benefits of posting research as preprints, before peer review, outweigh the risks, giving one reason.",
     frame: { genre: "Science communication article", reader: "readers of a student science magazine" },
-    source: {
-      author: "Kowalczyk",
-      year: 2024,
-      kind: "text",
-      text: "In physics and mathematics, many researchers post preprints on open servers before their work has been peer reviewed. This allows results to circulate rapidly and free of charge. However, it also means that journalists and the public may encounter claims that have not yet been checked by independent experts.",
-    },
   },
   {
     id: "phys-09",
@@ -132,14 +120,8 @@ export const PHYSICAL_SCIENCES: DailyPrompt[] = [
     id: "phys-10",
     task: "data",
     topic: "Radioactive decay measurements",
-    text: "Your lab partner missed the practical session. Write them a one-paragraph summary that describes the pattern in the measurements reported by Osei (2020) and explains what they suggest about the half-life of the sample.",
+    text: "Your lab partner missed the practical session. In one paragraph, describe the pattern you would expect in count-rate readings from a radioactive sample over time, and explain how it shows the half-life.",
     frame: { genre: "Results summary for a lab group", reader: "a lab partner who missed the session" },
-    source: {
-      author: "Osei",
-      year: 2020,
-      kind: "data",
-      text: "Students measured the count rate from a radioactive sample every six hours, after subtracting background radiation. The rate fell from 798 counts per minute at the start to 405 after six hours, 196 after twelve hours and 102 after eighteen hours. All readings used the same detector at a fixed distance.",
-    },
   },
   {
     id: "phys-11",
