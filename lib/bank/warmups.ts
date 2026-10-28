@@ -25,6 +25,21 @@ export const WARMUPS: DailyPrompt[] = [
       license: "CC BY 4.0",
       section: "abstract",
     },
+    more: [
+      {
+        kind: "text",
+        text: "Your ability to learn, remember, and refine your brain is extraordinary during childhood and adolescence, so sleep is particularly important during these stages. We explain the links between brain and sleep changes as you grow older, and why sleep should be an important part of your study schedule.",
+        cite: "James et al. (2020)",
+        authors: "James, E., Joechner, A.-K. and Muehlroth, B.E.",
+        year: 2020,
+        title: "From ZZZs to AAAs: Why Sleep Is an Important Part of Your Study Schedule",
+        journal: "Frontiers for Young Minds",
+        doi: "10.3389/frym.2020.00051",
+        url: "https://www.frontiersin.org/articles/10.3389/frym.2020.00051/pdf",
+        license: "CC BY",
+        section: "abstract",
+      },
+    ],
   },
   {
     id: "warm-02",
@@ -67,5 +82,20 @@ export const WARMUPS: DailyPrompt[] = [
       license: "CC BY 4.0",
       section: "abstract",
     },
+    more: [
+      {
+        kind: "text",
+        text: "Our aim was to examine the effect of a smartphone’s presence on learning and memory among undergraduates. A total of 119 undergraduates completed a memory task and the Smartphone Addiction Scale (SAS). As predicted, those without smartphones had higher recall accuracy compared to those with smartphones.",
+        cite: "Tanil and Yong (2020)",
+        authors: "Tanil, C.T. and Yong, M.H.",
+        year: 2020,
+        title: "Mobile phones: The effect of its presence on learning and memory",
+        journal: "PLOS ONE",
+        doi: "10.1371/journal.pone.0219233",
+        url: "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0219233",
+        license: "CC BY 4.0",
+        section: "abstract",
+      },
+    ],
   },
 ];
