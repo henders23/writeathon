@@ -31,7 +31,7 @@ export const SOCIAL_SCIENCES: DailyPrompt[] = [
         journal: "Frontiers in Political Science",
         doi: "10.3389/fpos.2026.1714305",
         url: "https://www.frontiersin.org/journals/political-science/articles/10.3389/fpos.2026.1714305/full",
-        license: "CC BY 4.0",
+        license: "CC BY",
         section: "abstract",
       },
       {
