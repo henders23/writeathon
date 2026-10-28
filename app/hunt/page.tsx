@@ -1,25 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Close, Search } from "@/components/Icons";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { SessionShell } from "@/components/AppShell";
+import { Search } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
 import { postJSON } from "@/lib/api";
 import { FALLBACK_HUNT, type HuntItem } from "@/lib/content";
 import { dayKey } from "@/lib/dates";
-import { focusForDay, todaysPrompt } from "@/lib/progress";
+import { focusForDay, getTopic, todaysChoices } from "@/lib/progress";
 import { update, useAppState } from "@/lib/store";
 
 const STUDY_SECONDS = 60;
 
-export default function HuntPreview() {
+function HuntPreview() {
   const state = useAppState();
+  const params = useSearchParams();
+  const topicId = params.get("topic");
   const [error, setError] = useState<string | null>(null);
   const [left, setLeft] = useState(STUDY_SECONDS);
   const today = dayKey();
   const profile = state?.profile;
-  const prompt = profile ? todaysPrompt(profile, today) : null;
+  const prompt = state && profile ? (topicId ? getTopic(topicId, state) : undefined) ?? todaysChoices(profile, state.sessions, today)[0] : null;
   const focusId = profile && prompt ? focusForDay(profile, prompt) : undefined;
   const cache = state?.huntCache;
   const items: HuntItem[] | null =
@@ -51,56 +55,61 @@ export default function HuntPreview() {
   if (!items) return <Loading label="Choosing today's five…" />;
 
   return (
-    <main className="shell">
-      <div className="page" style={{ gap: 20 }}>
-        <div className="row between">
-          <div className="row gap-8">
-            <Search color="var(--amber)" />
-            <span className="eyebrow amber">Phrase Hunt</span>
+    <SessionShell step={0} label="Phrase Hunt">
+      <main className="container mid">
+        <div className="row between wrap g16" style={{ alignItems: "flex-end" }}>
+          <div className="stack g8">
+            <span className="eyebrow amber row g6"><Search size={14} color="var(--amber)" /> Phrase Hunt · {prompt.topic}</span>
+            <h1 className="h1">Five to find.</h1>
+            <p className="lead" style={{ maxWidth: 640 }}>Study these, then they disappear. Use each one naturally in your paragraph to score.</p>
           </div>
-          <Link href="/" className="icon-btn" aria-label="Close">
-            <Close />
-          </Link>
+          <div className="card tight" style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <span className="small">{left > 0 ? "Study time" : "Ready when you are"}</span>
+            <span className="timer" role="timer" aria-label={left > 0 ? `${left} seconds of study time left` : "Study time over"}>
+              {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+            </span>
+          </div>
         </div>
 
-        <div className="stack gap-8">
-          <h1 className="h1">Five to find.</h1>
-          <p className="body">Study these, then they disappear. Use each one naturally in today&apos;s paragraph to score.</p>
-          <p className="small">Today: {prompt.text}</p>
-        </div>
-
-        <div className="row between card ink" style={{ flexDirection: "row", padding: "12px 16px", borderRadius: 14 }}>
-          <span style={{ fontSize: 14 }}>{left > 0 ? "Study time" : "Ready when you are"}</span>
-          <span className="serif" style={{ fontSize: 22, fontVariantNumeric: "tabular-nums" }}>
-            {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
-          </span>
-        </div>
+        <section className="card flat">
+          <span className="eyebrow">Today’s task</span>
+          <p className="body" style={{ fontSize: 16, color: "var(--ink)" }} data-dict="Writeathon task">{prompt.text}</p>
+        </section>
 
         {error && <div className="notice">{error}</div>}
 
-        <div className="stack gap-10">
+        <ol className="grid2" style={{ margin: 0, padding: 0, listStyle: "none" }}>
           {items.map((it, i) => (
-            <div key={i} className="card tight row gap-12" style={{ flexDirection: "row", alignItems: "flex-start" }}>
-              <span className="serif" style={{ width: 24, flexShrink: 0, fontSize: 18, color: "var(--muted)", paddingTop: 2 }}>{i + 1}</span>
-              <div className="stack gap-4 grow">
-                <span className="eyebrow" style={{ fontSize: 11 }}>{it.tag}</span>
-                <span className="serif" style={{ fontSize: 21, lineHeight: 1.2 }}>{it.phrase}</span>
-                <span className="serif" style={{ fontStyle: "italic", fontSize: 15, lineHeight: 1.4, color: "var(--ink-3)" }}>“{it.example}”</span>
+            <li key={i} className="card" style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
+              <span className="move-num" style={{ flexShrink: 0 }}>{i + 1}</span>
+              <div className="stack g6 grow">
+                <span className="eyebrow">{it.tag}</span>
+                <span className="serif" style={{ fontSize: 22, lineHeight: 1.2 }}>{it.phrase}</span>
+                <span className="serif" style={{ fontStyle: "italic", fontSize: 16, lineHeight: 1.4, color: "var(--ink-3)" }}>“{it.example}”</span>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, textAlign: "center" }}>
-          <div className="stack gap-2"><span className="serif" style={{ fontSize: 22, color: "var(--blue)" }}>3</span><span style={{ fontSize: 12, color: "var(--ink-3)" }}>Natural and accurate</span></div>
-          <div className="stack gap-2"><span className="serif" style={{ fontSize: 22, color: "var(--amber-text)" }}>1</span><span style={{ fontSize: 12, color: "var(--ink-3)" }}>Used, not quite right</span></div>
-          <div className="stack gap-2"><span className="serif" style={{ fontSize: 22, color: "var(--ink-3)" }}>−1</span><span style={{ fontSize: 12, color: "var(--ink-3)" }}>Each hint you use</span></div>
+        <div className="row between wrap g16">
+          <div className="row g24" aria-label="Scoring">
+            <span className="row g8"><span className="num" style={{ fontSize: 24, color: "var(--blue)" }}>3</span><span className="small">Natural and accurate</span></span>
+            <span className="row g8"><span className="num" style={{ fontSize: 24, color: "var(--amber-text)" }}>1</span><span className="small">Used, not quite right</span></span>
+            <span className="row g8"><span className="num" style={{ fontSize: 24, color: "var(--ink-3)" }}>−1</span><span className="small">Each hint you use</span></span>
+          </div>
+          <Link href={`/session?topic=${encodeURIComponent(prompt.id)}&mode=hunt`} className="btn">
+            I’m ready. Hide them and plan.
+          </Link>
         </div>
+      </main>
+    </SessionShell>
+  );
+}
 
-        <Link href="/write?mode=hunt" className="btn" style={{ marginTop: "auto" }}>
-          I&apos;m ready. Hide them.
-        </Link>
-      </div>
-    </main>
+export default function HuntPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <HuntPreview />
+    </Suspense>
   );
 }

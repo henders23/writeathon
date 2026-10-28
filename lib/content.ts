@@ -133,3 +133,68 @@ export const FALLBACK_SURGERY: SurgeryItem[] = [
   },
 ];
 export const SURGERY_SECONDS = 90;
+
+/* ---------- Paragraph moves (what each sentence does) ---------- */
+
+export const MOVE_IDS = ["claim", "define", "context", "summarise", "explain", "example", "evidence", "data", "concede", "counter", "sowhat", "recommend"] as const;
+export type MoveId = (typeof MOVE_IDS)[number];
+
+export const MOVES: Record<MoveId, { label: string; does: string; group: "Open" | "Develop" | "Argue" | "Close" }> = {
+  claim: { label: "Claim", does: "Your main point, first", group: "Open" },
+  define: { label: "Define", does: "What a key term means", group: "Open" },
+  context: { label: "Context", does: "Background the reader needs", group: "Open" },
+  summarise: { label: "Summarise", does: "The source’s point, in your words", group: "Open" },
+  explain: { label: "Explain how", does: "The mechanism or reason", group: "Develop" },
+  example: { label: "Example", does: "A concrete case", group: "Develop" },
+  evidence: { label: "Evidence", does: "Use the source, with citation", group: "Develop" },
+  data: { label: "Data", does: "A key figure and what it shows", group: "Develop" },
+  concede: { label: "Concede", does: "Admit a limit or other view", group: "Argue" },
+  counter: { label: "Counter", does: "Answer the other view", group: "Argue" },
+  sowhat: { label: "So what", does: "Why it matters to the reader", group: "Close" },
+  recommend: { label: "Recommend", does: "What the reader should do", group: "Close" },
+};
+
+/** A typical shape for each task, offered by "Suggest a shape". */
+export const TASK_SHAPES: Record<TaskId, MoveId[]> = {
+  respond: ["summarise", "claim", "explain", "sowhat"],
+  compare: ["claim", "explain", "evidence", "sowhat"],
+  position: ["claim", "explain", "example", "concede", "sowhat"],
+  data: ["data", "explain", "evidence", "sowhat"],
+  cause: ["claim", "explain", "evidence", "sowhat"],
+  define: ["define", "explain", "example", "sowhat"],
+  apply: ["summarise", "example", "explain", "sowhat"],
+  counter: ["context", "concede", "counter", "sowhat"],
+  problem: ["claim", "explain", "evidence", "recommend"],
+};
+
+/** The move a paragraph for this task usually opens with. */
+export const TASK_OPENERS: Record<TaskId, MoveId[]> = {
+  respond: ["summarise", "claim"],
+  compare: ["claim"],
+  position: ["claim"],
+  data: ["data", "claim"],
+  cause: ["claim"],
+  define: ["define"],
+  apply: ["summarise", "claim", "define"],
+  counter: ["context", "claim", "concede"],
+  problem: ["claim", "context"],
+};
+
+/* ---------- What students can ask feedback on ---------- */
+
+export const REQUESTS: { id: string; label: string; row: RowId; needsSource?: boolean }[] = [
+  { id: "view", label: "My main view", row: "argument" },
+  { id: "support", label: "Supporting my point", row: "argument" },
+  { id: "topic", label: "My first sentence", row: "organisation" },
+  { id: "linking", label: "Linking ideas", row: "organisation" },
+  { id: "ending", label: "My ending", row: "organisation" },
+  { id: "source", label: "Using the source", row: "sources", needsSource: true },
+  { id: "citing", label: "Citing", row: "sources", needsSource: true },
+  { id: "words", label: "Academic words", row: "range" },
+  { id: "register", label: "Sounding academic", row: "range" },
+  { id: "grammar", label: "Grammar", row: "accuracy" },
+  { id: "sentences", label: "Sentence structure", row: "accuracy" },
+];
+export const REQUEST_LABEL: Record<string, string> = Object.fromEntries(REQUESTS.map((r) => [r.id, r.label]));
+
+export const WARMUP_WORDS = { min: 60, max: 100 };

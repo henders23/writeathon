@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { Close, Repeat } from "@/components/Icons";
+import AppShell from "@/components/AppShell";
+import { Repeat } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import { clearRevisionError, requestRevision } from "@/lib/feedbackRunner";
 import { counts, currentStreak } from "@/lib/progress";
@@ -31,12 +32,13 @@ export default function RevisionResultPage() {
   if (!state) return <Loading />;
   if (!session || !original || !state.profile) {
     return (
-      <main className="shell">
-        <div className="page">
-          <p className="body">We couldn&apos;t find that revision on this device.</p>
-          <Link href="/" className="btn">Back to Today</Link>
-        </div>
-      </main>
+      <AppShell>
+        <main className="container narrow">
+          <h1 className="h1">Revision not found</h1>
+          <p className="lead">We couldn’t find that revision on this device.</p>
+          <Link href="/" className="btn" style={{ alignSelf: "flex-start" }}>Back to Today</Link>
+        </main>
+      </AppShell>
     );
   }
 
@@ -45,85 +47,84 @@ export default function RevisionResultPage() {
   const countBy = (lvl: RevisionLevel) => r?.changes.filter((c) => c.level === lvl).length ?? 0;
 
   return (
-    <main className="shell">
-      <div className="page">
-        <div className="row between">
-          <div className="row gap-8">
-            <Repeat size={18} color="var(--blue)" />
-            <span className="eyebrow blue">Revision complete</span>
+    <AppShell>
+      <main className="container">
+        <div className="row between wrap g16" style={{ alignItems: "flex-end" }}>
+          <div className="stack g6">
+            <span className="row g8">
+              <Repeat size={18} color="var(--blue)" />
+              <span className="eyebrow blue">Revision complete</span>
+            </span>
+            <h1 className="h1">{counts(session) ? `Streak kept: day ${streak}.` : "Revision saved."}</h1>
+            <span className="small">{original.words} words before, {session.words} after.</span>
           </div>
-          <Link href="/" className="icon-btn" aria-label="Close">
-            <Close />
-          </Link>
+          <Link href="/" className="btn">Done</Link>
         </div>
 
-        <div className="stack gap-4">
-          <h1 className="h1" style={{ fontSize: 28 }}>{counts(session) ? `Streak kept: day ${streak}.` : "Revision saved."}</h1>
-          <span className="small">{original.words} words before, {session.words} after.</span>
-        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 24, alignItems: "start" }}>
+          <section className="stack g16" aria-label="Before and after">
+            <div className="card">
+              <span className="eyebrow">Before</span>
+              <p className="paragraph" style={{ fontSize: 17, color: "var(--muted)" }}>{original.text}</p>
+            </div>
+            <div className="card">
+              <span className="eyebrow blue">After</span>
+              <p className="paragraph" style={{ fontSize: 17, color: "var(--ink)" }} data-dict="Your revision">{session.text}</p>
+            </div>
+          </section>
 
-        {!r && !session.revisionError && (
-          <div className="card center" role="status">
-            <div className="spinner" />
-            <p className="body">Comparing your two versions…</p>
-          </div>
-        )}
-        {session.revisionError && (
-          <div className="stack gap-10">
-            <div className="error" role="alert">{session.revisionError}</div>
-            <button className="btn secondary" onClick={() => { clearRevisionError(session.id); void requestRevision(session.id); }}>Try again</button>
-          </div>
-        )}
-
-        {r && (
-          <>
-            <p className="body">{r.summary}</p>
-            <section className="stack gap-10" aria-label="Where you revised">
-              <span className="eyebrow">Where you revised</span>
-              <div className="levels">
-                {LEVELS.map((l) => (
-                  <div key={l.id} className={countBy(l.id) ? "on" : ""}>
-                    <span className="serif" style={{ fontSize: 24 }}>{countBy(l.id)}</span>
-                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{l.label}</span>
-                  </div>
-                ))}
+          <section className="stack g16">
+            {!r && !session.revisionError && (
+              <div className="card" role="status" style={{ alignItems: "center", textAlign: "center" }}>
+                <div className="spinner" />
+                <p className="body">Comparing your two versions…</p>
               </div>
-              <p className="small" style={{ color: r.deeper ? "var(--blue)" : "var(--amber-text)" }}>
-                {r.deeper
-                  ? "You changed ideas or structure, not just words. That's how experienced writers revise."
-                  : "These were sentence and word changes. Next time, try changing an idea or the order too."}
-              </p>
-            </section>
+            )}
+            {session.revisionError && (
+              <div className="stack g10">
+                <div className="error" role="alert">{session.revisionError}</div>
+                <button className="btn secondary" style={{ alignSelf: "flex-start" }} onClick={() => { clearRevisionError(session.id); void requestRevision(session.id); }}>Try again</button>
+              </div>
+            )}
 
-            <section className="stack gap-10" aria-label="What changed">
-              {r.changes.map((c, i) => (
-                <div key={i} className="card tight row gap-10" style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                  <span className={`level ${c.level}`}>{c.level}</span>
-                  <span className="body grow" style={{ fontSize: 14 }}>{c.what}</span>
-                </div>
-              ))}
-            </section>
+            {r && (
+              <>
+                <p className="lead">{r.summary}</p>
+                <section className="card" aria-label="Where you revised">
+                  <span className="eyebrow">Where you revised</span>
+                  <div className="levels">
+                    {LEVELS.map((l) => (
+                      <div key={l.id} className={countBy(l.id) ? "on" : ""}>
+                        <span className="serif" style={{ fontSize: 26 }}>{countBy(l.id)}</span>
+                        <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{l.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="small" style={{ color: r.deeper ? "var(--blue)" : "var(--amber-text)" }}>
+                    {r.deeper
+                      ? "You changed ideas or structure, not just words. That’s how experienced writers revise."
+                      : "These were sentence and word changes. Next time, try changing an idea or the order too."}
+                  </p>
+                </section>
 
-            <section className="card amber tight" aria-label="Next step">
-              <span className="eyebrow amber">If you revised it again</span>
-              <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{r.nextStep}</p>
-            </section>
-          </>
-        )}
+                <section className="stack g8" aria-label="What changed">
+                  {r.changes.map((c, i) => (
+                    <div key={i} className="card tight" style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+                      <span className={`level ${c.level}`}>{c.level}</span>
+                      <span className="body grow" style={{ fontSize: 14 }}>{c.what}</span>
+                    </div>
+                  ))}
+                </section>
 
-        <section className="stack gap-10" aria-label="Before and after">
-          <details className="card tight">
-            <summary className="eyebrow" style={{ cursor: "pointer", minHeight: 28 }}>Before</summary>
-            <p className="paragraph" style={{ fontSize: 16, color: "var(--muted)" }}>{original.text}</p>
-          </details>
-          <div className="card tight">
-            <span className="eyebrow blue">After</span>
-            <p className="paragraph" style={{ fontSize: 16 }}>{session.text}</p>
-          </div>
-        </section>
-
-        <Link href="/" className="btn" style={{ marginTop: "auto" }}>Done</Link>
-      </div>
-    </main>
+                <section className="card amber" aria-label="Next step">
+                  <span className="eyebrow amber">If you revised it again</span>
+                  <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{r.nextStep}</p>
+                </section>
+              </>
+            )}
+          </section>
+        </div>
+      </main>
+    </AppShell>
   );
 }

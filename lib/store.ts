@@ -1,11 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { AppState, BankItem, Profile, Session } from "./types";
+import type { AppState, BankItem, DictEntry, Profile, Session } from "./types";
+import type { DailyPrompt } from "./bank/types";
 
 // All student data lives in this browser for now (no accounts yet).
 const KEY = "writeathon.v1";
-const EMPTY: AppState = { version: 1, profile: null, sessions: [], bank: [], huntCache: null, surgeryCache: null, surgeryRuns: [] };
+const EMPTY: AppState = { version: 1, profile: null, sessions: [], bank: [], dictionary: [], customPrompts: [], huntCache: null, surgeryCache: null, surgeryRuns: [] };
 
 let cache: AppState | null = null;
 const listeners = new Set<() => void>();
@@ -85,6 +86,22 @@ export function addToBank(item: BankItem) {
 
 export function updateBankItem(item: BankItem) {
   update((s) => ({ ...s, bank: s.bank.map((b) => (b.id === item.id ? item : b)) }));
+}
+
+export function addDictEntry(entry: DictEntry) {
+  update((s) => ({ ...s, dictionary: [...s.dictionary.filter((d) => d.word.toLowerCase() !== entry.word.toLowerCase()), entry] }));
+}
+
+export function updateDictEntry(entry: DictEntry) {
+  update((s) => ({ ...s, dictionary: s.dictionary.map((d) => (d.id === entry.id ? entry : d)) }));
+}
+
+export function removeDictEntry(id: string) {
+  update((s) => ({ ...s, dictionary: s.dictionary.filter((d) => d.id !== id) }));
+}
+
+export function addCustomPrompt(p: DailyPrompt) {
+  update((s) => ({ ...s, customPrompts: [...s.customPrompts.filter((x) => x.id !== p.id), p] }));
 }
 
 export function resetAll() {

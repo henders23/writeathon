@@ -9,14 +9,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
-  themeColor: "#F5F1E8",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F1E8" },
+    { media: "(prefers-color-scheme: dark)", color: "#1C1A17" },
+  ],
 };
+
+// Apply the saved theme before first paint so there is no flash.
+const themeScript = `try{var t=localStorage.getItem("writeathon.theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

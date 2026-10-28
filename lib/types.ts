@@ -1,5 +1,5 @@
-import type { Frame, Source, TaskId } from "./bank/types";
-import type { HuntItem, RowId, SurgeryItem } from "./content";
+import type { DailyPrompt, Frame, Source, TaskId } from "./bank/types";
+import type { HuntItem, MoveId, RowId, SurgeryItem } from "./content";
 
 export type Evidence = "S" | "G" | "N"; // used well, gap noticed, not tested
 
@@ -18,6 +18,9 @@ export type HuntVerdict = "natural" | "close" | "missed";
 export type HuntResult = { item: string; verdict: HuntVerdict; quote: string; note: string };
 export type Transfer = { label: string; quote: string };
 
+/** One sentence of the student's paragraph, labelled with the move it performs. */
+export type SentenceNote = { text: string; move: MoveId; kind: "strength" | "work" | "none"; note: string };
+
 export type Feedback = {
   summary: string;
   strengths: Strength[];
@@ -30,9 +33,13 @@ export type Feedback = {
   nextFocusSuggestion: string;
   hunt: HuntResult[];
   transfer: Transfer[];
+  sentences?: SentenceNote[];
+  requestAnswers?: { request: string; answer: string }[];
+  modelParagraph?: string;
 };
 
 export type Plan = { claim: string; support: string; soWhat: string };
+export type OutlineStep = { move: MoveId; note: string };
 
 export type Rewrite = { text: string; ok: boolean; comment: string; hintLevel: number };
 
@@ -56,8 +63,13 @@ export type Session = {
   promptText: string;
   frame?: Frame;
   source?: Source;
+  warmup?: boolean;
   focusId: string;
-  plan: Plan;
+  plan: Plan; // legacy three-note plan
+  outline?: OutlineStep[];
+  requests?: string[]; // what the student asked for feedback on (request ids)
+  requestNote?: string;
+  unsure?: number; // index of the sentence the student was least sure of
   text: string;
   words: number;
   writeSeconds: number;
@@ -88,8 +100,26 @@ export type BankItem = {
   reused: number;
   step?: number; // position in the review schedule
   due?: string; // next review date
-  reviews?: { date: string; ok: boolean }[];
+  reviews?: { date: string; ok: boolean; gap?: number }[];
 };
+
+export type DictEntry = {
+  id: string;
+  word: string;
+  partOfSpeech: string;
+  definition: string;
+  example: string;
+  collocations: string[];
+  distractors: string[]; // wrong definitions, for quizzes
+  wrongWords: string[]; // plausible wrong words, for gap-fill quizzes
+  context: string; // the sentence the student found it in
+  from: string; // where it was found, e.g. "Okafor et al. (2022)"
+  added: string; // date
+  step: number;
+  due: string;
+  reviews: { date: string; ok: boolean; type: QuizType }[];
+};
+export type QuizType = "meaning" | "gap" | "recall" | "use";
 
 export type Profile = {
   name: string;
@@ -108,6 +138,8 @@ export type AppState = {
   profile: Profile | null;
   sessions: Session[];
   bank: BankItem[];
+  dictionary: DictEntry[];
+  customPrompts: DailyPrompt[];
   huntCache: { date: string; promptId: string; focusId: string; items: HuntItem[] } | null;
   surgeryCache: { date: string; promptId: string; items: SurgeryItem[] } | null;
   surgeryRuns: SurgeryRun[];

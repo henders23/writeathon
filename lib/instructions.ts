@@ -1,4 +1,4 @@
-import { FOCUSES, ROWS, ROW_IDS } from "./content";
+import { FOCUSES, MOVES, MOVE_IDS, ROWS, ROW_IDS } from "./content";
 
 /* ---------- Feedback on today's paragraph ---------- */
 
@@ -9,6 +9,8 @@ PRINCIPLES
 - Never rewrite the whole paragraph. The student will revise one sentence themselves.
 - Be specific, kind and honest. Write in plain British English a B1 student can follow. One or two short sentences per comment.
 - Every quote you give MUST be copied exactly, character for character, from the student's paragraph (the app highlights it), and should be a whole sentence or a clear clause.
+- The student planned the paragraph as a sequence of moves (STUDENT'S OUTLINE). Where it helps, comment on whether the paragraph follows the plan.
+- If the student said which sentence they were least sure about, consider it, but choose the sentence to work on on its merits.
 - If the paragraph uses the source, check paraphrasing: an unmarked copied string of four or more words from the source is a gap in Sources. Practice sources are attributed to fictional authors; that is expected, so cite them normally.
 - Ignore spelling slips that do not affect meaning, unless they are systematic.
 - Judge the paragraph by the conventions of the student's DISCIPLINE and the GENRE and READER given. Disciplines differ: "I argue" is normal in many humanities and social science genres but unusual in a science results section; passive voice, hedging norms, how much to define terms, and how evidence is used all vary. Never impose one register on every discipline. A non-specialist reader needs key terms explained; a specialist reader does not.
@@ -37,6 +39,9 @@ RETURN
 - focusQuote: the student's best sentence showing today's focus, or "".
 - nextFocusSuggestion: the focus id you would target next.
 - hunt: only in Phrase Hunt mode, one entry per target item in the order given. verdict "natural" = used accurately and appropriately; "close" = used but form or function not quite right (show a corrected example in note); "missed" = not used. A forced or meaningless use is "close". quote = the student's sentence ("" if missed). In normal mode return an empty list.
+- sentences: the WHOLE paragraph split into its sentences, in order, each copied exactly. For each, "move" is what the sentence does (choose from: ${MOVE_IDS.map((m) => `${m} = ${MOVES[m].does}`).join("; ")}). kind is "work" for exactly the sentence in workOn.said, "strength" for sentences quoted in strengths, otherwise "none". note: for strength or work sentences, one short margin note (under 25 words) a tutor would write beside it; otherwise "".
+- requestAnswers: the student may have asked for feedback on specific things (STUDENT ASKED ABOUT). Answer EACH one directly in one or two sentences, pointing to sentence numbers or quoting briefly. If they asked nothing, return an empty list. If they wrote a free-text question, answer it too (request = their question).
+- modelParagraph: a model answer to the same prompt for the same reader, at a level just above the student's (B2-C1), similar length to the target, using the source correctly if there is one. It must show today's focus well. Do not copy the student's sentences.
 - transfer: for each RECENTLY BANKED pattern (if any are given) that the student used again correctly in today's paragraph, unprompted, give its label exactly as given and the exact quote. This is evidence of real learning, so only include clear, correct reuse. Otherwise an empty list.`;
 
 const evidence = { type: "string", enum: ["S", "G", "N"] };
@@ -47,7 +52,7 @@ const str = { type: "string" };
 export const FEEDBACK_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["summary", "strengths", "workOn", "rowEvidence", "focusEvidence", "focusUsedCount", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion", "hunt", "transfer"],
+  required: ["summary", "strengths", "workOn", "rowEvidence", "focusEvidence", "focusUsedCount", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion", "hunt", "transfer", "sentences", "requestAnswers", "modelParagraph"],
   properties: {
     summary: str,
     strengths: {
@@ -102,6 +107,20 @@ export const FEEDBACK_SCHEMA = {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["label", "quote"], properties: { label: str, quote: str } },
     },
+    sentences: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["text", "move", "kind", "note"],
+        properties: { text: str, move: { type: "string", enum: [...MOVE_IDS] }, kind: { type: "string", enum: ["strength", "work", "none"] }, note: str },
+      },
+    },
+    requestAnswers: {
+      type: "array",
+      items: { type: "object", additionalProperties: false, required: ["request", "answer"], properties: { request: str, answer: str } },
+    },
+    modelParagraph: str,
   },
 } as const;
 
@@ -213,5 +232,51 @@ export const REVISION_SCHEMA = {
     },
     deeper: { type: "boolean" },
     nextStep: str,
+  },
+} as const;
+
+/* ---------- Dictionary ---------- */
+
+export const DEFINE_INSTRUCTIONS = `You write entries for a learner's academic English dictionary. Students are university students with English at B1-C1. Given a word or short phrase, the sentence it appeared in, and the student's subject, return:
+- headword: the dictionary form (e.g. "mitigate" for "mitigating"; keep a phrase as a phrase).
+- partOfSpeech: e.g. "verb", "noun (uncountable)", "adjective", "phrase".
+- definition: the meaning IN THIS CONTEXT, in plain English, under 20 words, without using the word itself.
+- example: a NEW natural academic sentence using the word in the same sense (not the original sentence).
+- collocations: 2-4 common academic collocations or patterns (e.g. "mitigate the risk of", "help to mitigate").
+- distractors: 3 wrong but plausible definitions of similar length and style, for a multiple-choice quiz.
+- wrongWords: 3 real words of the same part of speech that do NOT fit the example sentence, for a gap-fill quiz.
+British English.`;
+
+export const DEFINE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["headword", "partOfSpeech", "definition", "example", "collocations", "distractors", "wrongWords"],
+  properties: {
+    headword: str,
+    partOfSpeech: str,
+    definition: str,
+    example: str,
+    collocations: { type: "array", items: str },
+    distractors: { type: "array", items: str },
+    wrongWords: { type: "array", items: str },
+  },
+} as const;
+
+export const USE_CHECK_INSTRUCTIONS = `A student learning academic English is practising a vocabulary item by writing their own sentence with it. Decide whether the sentence uses the word correctly, with the right meaning, grammar and typical collocation, in a way that would suit academic writing.
+ok = true if it does (small unrelated slips are fine). comment: one short, encouraging sentence in plain British English; if not ok, say what to change.`;
+
+/* ---------- Help me understand ---------- */
+
+export const EXPLAIN_INSTRUCTIONS = `A university student (English B1-B2) is reading a short extract from an academic article before writing about it. Help them understand it WITHOUT writing their paragraph for them.
+- plain: the extract's main point in plain English, 2-3 short sentences, under 60 words. Do not add opinions or new facts.
+- keyWords: up to 4 harder words or phrases from the extract, each with a short plain meaning (under 12 words).`;
+
+export const EXPLAIN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["plain", "keyWords"],
+  properties: {
+    plain: str,
+    keyWords: { type: "array", items: { type: "object", additionalProperties: false, required: ["word", "meaning"], properties: { word: str, meaning: str } } },
   },
 } as const;

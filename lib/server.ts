@@ -72,7 +72,8 @@ async function claudeStructured<T>(opts: StructuredOpts): Promise<T> {
     body: JSON.stringify({
       model: opts.fast ? env.anthropicFastModel() : env.anthropicModel(),
       max_tokens: opts.maxTokens ?? (opts.fast ? 600 : 3000),
-      system: opts.instructions,
+      // The instructions are identical on every call, so cache them: later calls read them at a fraction of the cost.
+      system: [{ type: "text", text: opts.instructions, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: opts.input }],
       output_config: { format: { type: "json_schema", schema: opts.schema } },
     }),

@@ -1,9 +1,9 @@
 import type { Frame, Source, TaskId } from "@/lib/bank/types";
-import { FOCUS_BY_ID, ROW_IDS, TASKS, type HuntItem } from "@/lib/content";
+import { FOCUS_BY_ID, MOVES, REQUEST_LABEL, ROW_IDS, TASKS, type HuntItem, type MoveId } from "@/lib/content";
 import { DISCIPLINE_LABEL } from "@/lib/disciplines";
 import { FEEDBACK_INSTRUCTIONS, FEEDBACK_SCHEMA } from "@/lib/instructions";
 import { guard, jsonError, structured } from "@/lib/server";
-import type { Feedback, Plan } from "@/lib/types";
+import type { Feedback, OutlineStep, Plan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -17,6 +17,10 @@ type Body = {
   focusId?: string;
   mode?: "write" | "hunt";
   plan?: Plan;
+  outline?: OutlineStep[];
+  requests?: string[];
+  requestNote?: string;
+  unsure?: string;
   text?: string;
   words?: number;
   writeSeconds?: number;
@@ -38,14 +42,26 @@ export async function POST(req: Request) {
   const hunt = b.mode === "hunt" ? (b.huntItems ?? []).slice(0, 5) : [];
   const bank = (b.bank ?? []).slice(-5);
   const plan = b.plan && (b.plan.claim || b.plan.support || b.plan.soWhat) ? b.plan : null;
+  const outline = (b.outline ?? []).slice(0, 8);
+  const requests = (b.requests ?? []).slice(0, 2).map((r) => REQUEST_LABEL[r] ?? r);
+  const note = (b.requestNote ?? "").trim().slice(0, 300);
+  const src = b.source;
+
   const input = [
     `MODE: ${hunt.length ? "Phrase Hunt" : "Normal"}`,
     `DISCIPLINE: ${DISCIPLINE_LABEL[b.discipline ?? ""] ?? "General academic"}`,
     b.frame ? `GENRE: ${b.frame.genre}. READER: ${b.frame.reader}.` : "",
     task ? `TASK TYPE: ${task.label}. A paragraph like this usually: ${task.moves.join("; ")}.` : "",
     `PROMPT: ${b.promptText}`,
-    b.source ? `SOURCE (${b.source.author}, ${b.source.year}; practice source): ${b.source.text}` : "SOURCE: none today",
+    src
+      ? `SOURCE (${src.cite}${src.own ? ", the student's own source" : `, ${src.journal}`}; cite it as ${src.cite}): ${src.text.slice(0, 2000)}`
+      : "SOURCE: none today",
     `TODAY'S FOCUS: ${focus.id} (${focus.label}, area: ${focus.row})`,
+    outline.length
+      ? `STUDENT'S OUTLINE: ${outline.map((o, i) => `${i + 1}. ${MOVES[o.move as MoveId]?.label ?? o.move}${o.note ? ` (${o.note.slice(0, 80)})` : ""}`).join("; ")}`
+      : "",
+    requests.length || note ? `STUDENT ASKED ABOUT: ${[...requests, ...(note ? [`"${note}"`] : [])].join("; ")}` : "STUDENT ASKED ABOUT: nothing specific",
+    b.unsure ? `SENTENCE THE STUDENT WAS LEAST SURE ABOUT: "${b.unsure.slice(0, 400)}"` : "",
     hunt.length ? `PHRASE HUNT ITEMS (in order):\n${hunt.map((h, i) => `${i + 1}. ${h.phrase}`).join("\n")}` : "",
     bank.length ? `RECENTLY BANKED PATTERNS:\n${bank.map((x) => `- ${x.label}: "${x.example}"`).join("\n")}` : "RECENTLY BANKED PATTERNS: none",
     plan ? `STUDENT'S PLAN: claim: ${plan.claim || "-"} | support: ${plan.support || "-"} | so what: ${plan.soWhat || "-"}` : "",
@@ -62,6 +78,7 @@ export async function POST(req: Request) {
       input,
       schemaName: "paragraph_feedback",
       schema: FEEDBACK_SCHEMA,
+      maxTokens: 5000,
     });
     // Normalise defensively so the app can rely on the shape.
     for (const r of ROW_IDS) if (!fb.rowEvidence?.[r]) fb.rowEvidence = { ...fb.rowEvidence, [r]: "N" };
@@ -69,6 +86,8 @@ export async function POST(req: Request) {
     fb.hunt = hunt.length ? hunt.map((h, i) => fb.hunt?.[i] ?? { item: h.phrase, verdict: "missed", quote: "", note: "" }) : [];
     const labels = new Set(bank.map((x) => x.label));
     fb.transfer = (fb.transfer ?? []).filter((t) => labels.has(t.label));
+    fb.sentences = (fb.sentences ?? []).filter((x) => x.text?.trim());
+    fb.requestAnswers = fb.requestAnswers ?? [];
     return Response.json(fb);
   } catch (e) {
     console.error("feedback failed", e);

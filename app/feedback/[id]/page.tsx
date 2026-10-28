@@ -2,199 +2,291 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Close } from "@/components/Icons";
+import { useState } from "react";
+import AppShell, { SessionShell } from "@/components/AppShell";
+import { Check } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Marked from "@/components/Marked";
 import RewriteIt from "@/components/RewriteIt";
-import Stepper from "@/components/Stepper";
 import { useSessionFeedback } from "@/components/useSessionFeedback";
-import { ROWS, TARGET_WORDS } from "@/lib/content";
-import { clearFeedbackError, requestFeedback } from "@/lib/feedbackRunner";
-import { MILESTONES, areasShownWell, counts, currentStreak, lastAttempt } from "@/lib/progress";
+import { MOVES, REQUEST_LABEL, ROWS, TARGET_WORDS, WARMUP_WORDS, type MoveId } from "@/lib/content";
 import { parseDay } from "@/lib/dates";
+import { clearFeedbackError, requestFeedback } from "@/lib/feedbackRunner";
+import { splitSentences } from "@/lib/match";
+import { MILESTONES, areasShownWell, counts, currentStreak, lastAttempt } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
+import type { Feedback, SentenceNote, Session } from "@/lib/types";
+
+const moveLabel = (m: string) => MOVES[m as MoveId]?.label ?? m;
+
+/** Sentence notes from the feedback, or a fallback built from the strengths and the sentence to rewrite. */
+function rowsFor(session: Session, fb: Feedback): SentenceNote[] {
+  if (fb.sentences && fb.sentences.length) return fb.sentences;
+  const sents = splitSentences(session.text);
+  return sents.map((text, i) => {
+    const work = fb.workOn && (text.includes(fb.workOn.said) || fb.workOn.said.includes(text));
+    const strength = fb.strengths.find((s) => s.quote && text.includes(s.quote));
+    const move = (session.outline?.[i]?.move ?? (i === 0 ? "claim" : i === sents.length - 1 ? "sowhat" : "explain")) as MoveId;
+    return work
+      ? { text, move, kind: "work" as const, note: fb.workOn!.comment }
+      : strength
+        ? { text, move, kind: "strength" as const, note: strength.comment }
+        : { text, move, kind: "none" as const, note: "" };
+  });
+}
 
 export default function FeedbackPage() {
   const { id } = useParams<{ id: string }>();
   const state = useAppState();
   const session = state?.sessions.find((s) => s.id === id);
+  const [showModel, setShowModel] = useState(false);
   useSessionFeedback(session);
 
   if (!state) return <Loading />;
   if (!session || !state.profile) {
     return (
-      <main className="shell">
-        <div className="page">
-          <p className="body">We couldn&apos;t find that paragraph on this device.</p>
-          <Link href="/" className="btn">Back to Today</Link>
-        </div>
-      </main>
+      <AppShell>
+        <main className="container narrow">
+          <h1 className="h1">We couldn’t find that paragraph</h1>
+          <p className="lead">It may have been written in another browser.</p>
+          <Link href="/" className="btn" style={{ alignSelf: "flex-start" }}>Back to Today</Link>
+        </main>
+      </AppShell>
     );
   }
 
   const streak = currentStreak(state.profile, state.sessions);
   const next = MILESTONES.find((m) => m.days > streak);
   const fb = session.feedback;
+  const target = session.warmup ? WARMUP_WORDS : TARGET_WORDS;
   const mins = Math.floor(session.writeSeconds / 60);
   const secs = session.writeSeconds % 60;
-  const inRange = session.words >= TARGET_WORDS.min;
   const prev = lastAttempt(state.sessions, session.promptId, session.date);
   const prevAreas = prev ? areasShownWell(prev) : null;
   const nowAreas = areasShownWell(session);
+  const unsureText = session.unsure !== undefined ? splitSentences(session.text)[session.unsure] : undefined;
 
   return (
-    <main className="shell">
-      <div className="page">
-        <div className="row between">
-          <p className="eyebrow">Paragraph complete</p>
-          <Link href="/" className="icon-btn" aria-label="Close">
-            <Close />
-          </Link>
-        </div>
-        <Stepper current={fb ? (session.banked ? 5 : 4) : 3} />
-
-        <div className="row gap-16">
-          <div style={{ width: 76, height: 76, borderRadius: 38, background: "var(--ink)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span className="serif" style={{ fontSize: 32, lineHeight: 1, color: "var(--card)" }}>{streak}</span>
-            <span style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--night-amber)" }}>{streak === 1 ? "day" : "days"}</span>
+    <SessionShell step={3} label={session.warmup ? "Warm-up" : session.topic}>
+      <main className="container">
+        <div className="row between wrap g16" style={{ alignItems: "flex-end" }}>
+          <div className="stack g8" style={{ maxWidth: 860 }}>
+            <p className="eyebrow">{session.topic}</p>
+            <h1 className="h1">{fb ? "Your feedback, in the margins" : session.feedbackError ? "Feedback didn’t arrive" : "Reading your paragraph…"}</h1>
+            {fb?.summary && <p className="lead" data-dict="Feedback">{fb.summary}</p>}
           </div>
-          <div className="stack gap-4">
-            <h1 className="h1" style={{ fontSize: 28 }}>{counts(session) ? (streak === 1 ? "Streak started." : "Streak kept.") : "Thanks for writing."}</h1>
-            <span style={{ fontSize: 14, color: "var(--muted)" }}>
-              {counts(session)
-                ? next
-                  ? `${next.days - streak} day${next.days - streak === 1 ? "" : "s"} to your ${next.days}-day milestone`
-                  : "You've passed every milestone."
-                : "Write at least 40 words for it to count towards your streak."}
-            </span>
+          <div className="row g24">
+            <Stat value={String(session.words)} label={`words · aim ${target.min}–${target.max}`} />
+            <Stat value={`${mins}:${String(secs).padStart(2, "0")}`} label="writing time" />
+            <Stat value={String(streak)} label={counts(session) ? (next ? `day streak · ${next.days - streak} to ${next.days}` : "day streak") : "day streak · 40+ words to count"} />
           </div>
-        </div>
-
-        <div className="rule">
-          {session.words} words in {mins > 0 ? `${mins} min ` : ""}
-          {secs} s{inRange ? "." : `. Next time, aim for ${TARGET_WORDS.min}+.`}
         </div>
 
         {!fb && !session.feedbackError && (
-          <div className="card center" role="status">
+          <div className="panel stack g12" role="status" style={{ padding: 48, alignItems: "center" }}>
             <div className="spinner" />
-            <p className="body">Reading your paragraph…</p>
+            <p className="body">Your tutor is reading each sentence. This takes about 20 seconds.</p>
+            <p className="paragraph" style={{ maxWidth: 760 }}>{session.text}</p>
           </div>
         )}
 
         {session.feedbackError && (
-          <div className="stack gap-10">
+          <div className="stack g10" style={{ maxWidth: 720 }}>
             <div className="error" role="alert">{session.feedbackError}</div>
-            <button className="btn secondary" onClick={() => { clearFeedbackError(session.id); void requestFeedback(session.id); }}>
+            <button className="btn secondary" style={{ alignSelf: "flex-start" }} onClick={() => { clearFeedbackError(session.id); void requestFeedback(session.id); }}>
               Try again
             </button>
           </div>
         )}
 
-        {fb && prev && (
-          <section className="card amber tight" aria-label="Compared with your last attempt">
-            <span className="eyebrow amber">Same question, {parseDay(prev.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })} vs today</span>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div className="stack gap-2">
-                <span className="small">Then</span>
-                <span className="serif" style={{ fontSize: 20 }}>{prev.words} words</span>
-                {prevAreas !== null && <span className="small">{prevAreas} of 5 areas shown well</span>}
-              </div>
-              <div className="stack gap-2">
-                <span className="small" style={{ color: "var(--amber-deep)", fontWeight: 600 }}>Now</span>
-                <span className="serif" style={{ fontSize: 20 }}>{session.words} words</span>
-                {nowAreas !== null && <span className="small">{nowAreas} of 5 areas shown well</span>}
-              </div>
-            </div>
-            <p className="small" style={{ color: "var(--amber-deep)" }}>
-              {nowAreas !== null && prevAreas !== null && nowAreas > prevAreas
-                ? "More areas shown well than last time. You beat your last attempt."
-                : "Repeating a task is one of the surest ways to improve. Compare the two and see what changed."}
-            </p>
-          </section>
-        )}
-
         {fb && (
-          <>
-            {fb.summary && <p className="body">{fb.summary}</p>}
-
-            <section className="card" aria-labelledby="yours">
-              <div className="row between">
-                <h2 id="yours" className="eyebrow">Your paragraph</h2>
-                <span className="row gap-10" style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                  <span className="row gap-4"><span className="dot blue" />Went well</span>
-                  {fb.workOn && <span className="row gap-4"><span className="dot amber" />Rewrite</span>}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 360px", gap: 24, alignItems: "start" }} className="fb-grid">
+            <section className="panel" style={{ padding: "16px 28px 24px" }} aria-labelledby="margins-h">
+              <div className="row between wrap g8" style={{ padding: "8px 0 12px", borderBottom: "1px solid var(--line)" }}>
+                <h2 id="margins-h" className="eyebrow">Your paragraph, sentence by sentence</h2>
+                <span className="legend">
+                  <span><span className="swatch" style={{ background: "var(--chart-blue)" }} />Went well</span>
+                  {fb.workOn && <span><span className="swatch" style={{ background: "var(--chart-amber)" }} />Rewrite this one</span>}
+                  <span><span className="swatch" style={{ background: "var(--line-2)" }} />What it does</span>
                 </span>
               </div>
-              <Marked
-                text={session.text}
-                marks={[
-                  ...(fb.workOn ? [{ quote: fb.workOn.said, className: "mark-work", label: "Sentence to rewrite" }] : []),
-                  ...fb.strengths.map((s) => ({ quote: s.quote, className: "mark-strength", label: "Went well" })),
-                ]}
-              />
+              {rowsFor(session, fb).map((r, i) => {
+                const isWork = r.kind === "work" && fb.workOn;
+                const isUnsure = unsureText && (r.text === unsureText || r.text.includes(unsureText) || unsureText.includes(r.text));
+                return (
+                  <div key={i} className={`margin-row${isWork ? " work" : ""}`}>
+                    <span className="move-tag">{moveLabel(r.move)}</span>
+                    <div className="stack g10">
+                      <p className="sentence" data-dict={session.topic}>
+                        <span className={r.kind === "strength" ? "hl-strength" : isWork && session.banked ? "hl-work" : undefined}>{r.text}</span>
+                      </p>
+                      {isUnsure && <span className="pill line" style={{ alignSelf: "flex-start" }}>You weren’t sure about this one</span>}
+                      {isWork && fb.workOn && <RewriteIt session={session} workOn={fb.workOn} />}
+                    </div>
+                    <div className="note">
+                      {r.kind === "strength" && <span className="t">Went well</span>}
+                      {isWork && fb.workOn && (
+                        <>
+                          <span className="t">{ROWS[fb.workOn.row]?.label} · {fb.workOn.label}</span>
+                          <span>{fb.workOn.comment}</span>
+                        </>
+                      )}
+                      {!isWork && r.note && <span>{r.note}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+              {fb.strengths.length > 0 && (
+                <div className="stack g12" style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginTop: 8 }}>
+                  <span className="eyebrow blue">What went well</span>
+                  <div className="grid2">
+                    {fb.strengths.map((s, i) => (
+                      <div key={i} className="card tight blue">
+                        <span className="eyebrow blue">{ROWS[s.row]?.label ?? s.row} · {s.label}</span>
+                        {s.quote && <p className="quote" style={{ fontSize: 16 }}>“{s.quote}”</p>}
+                        <span className="body" style={{ fontSize: 14, color: "var(--blue-strong)" }}>{s.comment}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
 
-            {fb.transfer.length > 0 && (
-              <section className="card blue" aria-label="You used it again">
-                <span className="eyebrow blue">You used it again</span>
-                {fb.transfer.map((t, i) => (
-                  <div key={i} className="stack gap-4">
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>{t.label}</span>
-                    <p className="quote" style={{ fontSize: 17 }}>“{t.quote}”</p>
-                  </div>
-                ))}
-                <p className="small" style={{ color: "#3B4A60" }}>A pattern from your bank, used without being asked. That&apos;s what learning looks like.</p>
-              </section>
-            )}
-
-            {fb.strengths.length > 0 && (
-              <section className="stack gap-12" aria-labelledby="well">
-                <div className="row gap-8">
-                  <span className="dot blue" />
-                  <h2 id="well" className="eyebrow blue">What went well</h2>
-                </div>
-                {fb.strengths.map((s, i) => (
-                  <div key={i} className="card tight">
-                    <div className="stack gap-2">
-                      <span className="eyebrow blue">{ROWS[s.row]?.label ?? s.row}</span>
-                      <span style={{ fontSize: 15, fontWeight: 600 }}>{s.label}</span>
+            <aside className="stack g16">
+              {(fb.requestAnswers?.length ?? 0) > 0 && (
+                <section className="card" aria-labelledby="asked-h">
+                  <h2 id="asked-h" className="eyebrow">You asked about</h2>
+                  {fb.requestAnswers!.map((a, i) => (
+                    <div key={i} className="stack g4">
+                      <strong style={{ fontSize: 15 }}>{REQUEST_LABEL[a.request] ?? a.request}</strong>
+                      <span className="body" style={{ fontSize: 14 }} data-dict="Feedback">{a.answer}</span>
                     </div>
-                    {s.quote && <p className="quote">“{s.quote}”</p>}
-                    <p className="body" style={{ fontSize: 14 }}>{s.comment}</p>
-                  </div>
-                ))}
-              </section>
-            )}
+                  ))}
+                </section>
+              )}
 
-            {fb.workOn && (
-              <section className="stack gap-12" aria-labelledby="work">
-                <div className="row gap-8">
-                  <span className="dot amber" />
-                  <h2 id="work" className="eyebrow amber">One sentence to rewrite</h2>
-                </div>
-                <div className="card amber" style={{ padding: 16, gap: 12 }}>
-                  <div className="stack gap-2">
-                    <span className="eyebrow amber">{ROWS[fb.workOn.row]?.label ?? fb.workOn.row}</span>
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>{fb.workOn.label}</span>
+              {session.outline && session.outline.length > 0 && <PlanVsParagraph session={session} rows={rowsFor(session, fb)} />}
+
+              {fb.transfer.length > 0 && (
+                <section className="card blue" aria-label="You used it again">
+                  <span className="eyebrow blue">You used it again</span>
+                  {fb.transfer.map((t, i) => (
+                    <div key={i} className="stack g4">
+                      <strong style={{ fontSize: 14, color: "var(--blue-strong)" }}>{t.label}</strong>
+                      <p className="quote" style={{ fontSize: 16 }}>“{t.quote}”</p>
+                    </div>
+                  ))}
+                  <span className="small" style={{ color: "var(--blue)" }}>A pattern from your bank, used without being asked. That’s learning.</span>
+                </section>
+              )}
+
+              {prev && (
+                <section className="card amber" aria-label="Compared with your last attempt">
+                  <span className="eyebrow amber">Same question: then and now</span>
+                  <div className="grid2" style={{ gap: 10 }}>
+                    <div className="stack g4">
+                      <span className="small">{parseDay(prev.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                      <span className="num" style={{ fontSize: 22 }}>{prev.words} words</span>
+                      {prevAreas !== null && <span className="small">{prevAreas} of 5 areas shown well</span>}
+                    </div>
+                    <div className="stack g4">
+                      <span className="small" style={{ color: "var(--amber-text)", fontWeight: 600 }}>Today</span>
+                      <span className="num" style={{ fontSize: 22 }}>{session.words} words</span>
+                      {nowAreas !== null && <span className="small">{nowAreas} of 5 areas shown well</span>}
+                    </div>
                   </div>
-                  <div className="stack gap-4">
-                    <span style={{ fontSize: 13, color: "#6A5030" }}>You wrote</span>
-                    <p className="serif" style={{ margin: 0, fontSize: 18, lineHeight: 1.35, color: "var(--ink-2)" }}>“{fb.workOn.said}”</p>
-                  </div>
-                  <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{fb.workOn.comment}</p>
-                  <RewriteIt session={session} workOn={fb.workOn} />
-                </div>
-              </section>
-            )}
-          </>
+                </section>
+              )}
+
+              {fb.modelParagraph && (
+                <section className="card" aria-labelledby="model-h">
+                  <h2 id="model-h" className="eyebrow">Compare with a model</h2>
+                  {!showModel ? (
+                    <>
+                      <span className="body" style={{ fontSize: 14 }}>
+                        {session.banked || session.rewrites?.some((r) => r.ok)
+                          ? "See how a strong writer might answer the same question. Look for one move you could borrow."
+                          : "Try your rewrite first. Then see how a strong writer might answer the same question."}
+                      </span>
+                      <button className="btn secondary small" style={{ alignSelf: "flex-start" }} onClick={() => setShowModel(true)}>Show the model paragraph</button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="paragraph" style={{ fontSize: 16 }} data-dict="Model paragraph">{fb.modelParagraph}</p>
+                      <span className="small">A model, not the answer. Which sentence does something yours doesn’t? Select any useful word to add it to your dictionary.</span>
+                    </>
+                  )}
+                </section>
+              )}
+
+              <div className="stack g8">
+                <Link href="/progress" className="btn secondary">See your progress</Link>
+                <Link href="/" className="btn">Done for today</Link>
+              </div>
+            </aside>
+          </div>
         )}
 
-        <div className="stack gap-10" style={{ marginTop: "auto" }}>
-          <Link href="/pattern" className="btn secondary">See your pattern</Link>
-          <Link href="/" className="btn">Done</Link>
-        </div>
-      </div>
-    </main>
+        {fb && !fb.sentences?.length && fb.strengths.length === 0 && !fb.workOn && (
+          <section className="card">
+            <Marked text={session.text} marks={[]} />
+          </section>
+        )}
+      </main>
+    </SessionShell>
   );
 }
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="stack g4">
+      <span className="num" style={{ fontSize: 30, lineHeight: 1 }}>{value}</span>
+      <span className="small">{label}</span>
+    </div>
+  );
+}
+
+function PlanVsParagraph({ session, rows }: { session: Session; rows: SentenceNote[] }) {
+  const outline = session.outline ?? [];
+  const n = Math.max(outline.length, rows.length);
+  const matched = outline.filter((o, i) => rows[i]?.move === o.move).length;
+  return (
+    <section className="card" aria-labelledby="pvp-h">
+      <div className="row between">
+        <h2 id="pvp-h" className="eyebrow">Your plan vs your paragraph</h2>
+        <span className="small">{matched} of {outline.length} as planned</span>
+      </div>
+      <table className="table-view">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Planned</th>
+            <th scope="col">Wrote</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: n }, (_, i) => {
+            const p = outline[i]?.move;
+            const w = rows[i]?.move;
+            const same = p && w && p === w;
+            return (
+              <tr key={i}>
+                <td>{i + 1}</td>
+                <td>{p ? moveLabel(p) : <span className="small">–</span>}</td>
+                <td>
+                  {w ? moveLabel(w) : <span className="small">–</span>} {same && <Check size={11} color="var(--blue)" />}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <span className="small">
+        {matched === outline.length && rows.length === outline.length
+          ? "You wrote exactly the paragraph you planned."
+          : "Changing your plan while writing is fine. Ask: did each change make the paragraph stronger?"}
+      </span>
+    </section>
+  );
+}
+

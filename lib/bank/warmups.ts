@@ -1,0 +1,71 @@
+import type { DailyPrompt } from "./types";
+
+/**
+ * Warm-up tasks for a student's very first sessions, in any discipline: everyday
+ * student-life topics, one short paragraph (60–100 words), one genuine source each.
+ */
+export const WARMUPS: DailyPrompt[] = [
+  {
+    id: "warm-01",
+    task: "position",
+    topic: "Sleep and studying",
+    text: "Is it worth losing sleep to study more? In one short paragraph (60–100 words), give your view and one reason, using Okano et al. (2019).",
+    frame: { genre: "Post for a student study-skills forum", reader: "other first-year students" },
+    warmup: true,
+    source: {
+      kind: "text",
+      text: "Overall, better quality, longer duration, and greater consistency of sleep correlated with better grades. … Sleep measures accounted for nearly 25% of the variance in academic performance.",
+      cite: "Okano et al. (2019)",
+      authors: "Okano, K., Kaczmarzyk, J.R., Dave, N., et al.",
+      year: 2019,
+      title: "Sleep quality, duration, and consistency are associated with better academic performance in college students",
+      journal: "npj Science of Learning",
+      doi: "10.1038/s41539-019-0055-z",
+      url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6773696",
+      license: "CC BY 4.0",
+      section: "abstract",
+    },
+  },
+  {
+    id: "warm-02",
+    task: "compare",
+    topic: "Studying alone or together",
+    text: "Is it better to study alone, in a group, or both? In one short paragraph (60–100 words), compare these ways and give your view, using Song et al. (2025).",
+    frame: { genre: "Post for a student study-skills forum", reader: "other first-year students" },
+    warmup: true,
+    source: {
+      kind: "text",
+      text: "In Experiment 1, the results demonstrated that the participants who prepared individually before collaboration performed better than those who engaged solely in collaborative or individual learning.",
+      cite: "Song et al. (2025)",
+      authors: "Song, M.H., Lim, J., Lee, S., et al.",
+      year: 2025,
+      title: "Enhancing group outcomes: the role of individual preparation in collaborative learning",
+      journal: "BMC Medical Education",
+      doi: "10.1186/s12909-025-06925-1",
+      url: "https://bmcmededuc.biomedcentral.com/articles/10.1186/s12909-025-06925-1",
+      license: "CC BY 4.0",
+      section: "abstract",
+    },
+  },
+  {
+    id: "warm-03",
+    task: "position",
+    topic: "Phones while studying",
+    text: "Should students keep their phones out of sight while studying? In one short paragraph (60–100 words), give your view and one reason, using Christodoulou and Roussos (2025).",
+    frame: { genre: "Post for a student study-skills forum", reader: "other first-year students" },
+    warmup: true,
+    source: {
+      kind: "text",
+      text: "This experimental study examined the effects of passive mobile phone presence on attentional control in young adults aged 18–25. … Contrary to previous literature, the presence of a mobile phone did not significantly distract participants or impair attentional performance.",
+      cite: "Christodoulou and Roussos (2025)",
+      authors: "Christodoulou, A. and Roussos, P.",
+      year: 2025,
+      title: "“Phone in the Room, Mind on the Roam”: Investigating the Impact of Mobile Phone Presence on Distraction",
+      journal: "European Journal of Investigation in Health, Psychology and Education",
+      doi: "10.3390/ejihpe15050074",
+      url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12110250/",
+      license: "CC BY 4.0",
+      section: "abstract",
+    },
+  },
+];

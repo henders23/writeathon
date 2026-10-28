@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   try {
     const out = await structured<{ items: HuntItem[] }>({
       instructions: HUNT_INSTRUCTIONS,
-      input: `PROMPT: ${b.promptText}\n${b.source ? `SOURCE (${b.source.author}, ${b.source.year}): ${b.source.text}` : "SOURCE: none"}\nSTUDENT'S CURRENT FOCUS: ${focus.label} (${focus.row}). ${focus.rubric}`,
+      input: `PROMPT: ${b.promptText}\n${b.source ? `SOURCE (${b.source.cite}): ${b.source.text}` : "SOURCE: none"}\nSTUDENT'S CURRENT FOCUS: ${focus.label} (${focus.row}). ${focus.rubric}`,
       schemaName: "phrase_hunt",
       schema: HUNT_SCHEMA,
     });

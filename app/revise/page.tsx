@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import FrameLine from "@/components/FrameLine";
-import { Close, Repeat } from "@/components/Icons";
+import AppShell from "@/components/AppShell";
+import { Repeat } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Marked from "@/components/Marked";
 import Onboarding from "@/components/Onboarding";
-import { TASKS } from "@/lib/content";
+import SourceCard from "@/components/SourceCard";
+import { MOVES, TASKS } from "@/lib/content";
 import { dayKey, parseDay } from "@/lib/dates";
 import { wordCount } from "@/lib/match";
 import { revisionCandidates } from "@/lib/progress";
@@ -45,44 +45,40 @@ export default function RevisePage() {
   if (!state) return <Loading />;
   if (!state.profile) return <Onboarding />;
 
-  const header = (
-    <div className="row between">
-      <div className="row gap-8">
-        <Repeat size={18} color="var(--blue)" />
-        <span className="eyebrow blue">Revision day</span>
-      </div>
-      <Link href="/" className="icon-btn" aria-label="Close">
-        <Close />
-      </Link>
-    </div>
+  const eyebrow = (
+    <span className="row g8">
+      <Repeat size={18} color="var(--blue)" />
+      <span className="eyebrow blue">Revision day</span>
+    </span>
   );
 
   if (!picked) {
     return (
-      <main className="shell">
-        <div className="page" style={{ gap: 18 }}>
-          {header}
-          <div className="stack gap-8">
+      <AppShell>
+        <main className="container">
+          <div className="stack g8" style={{ maxWidth: 820 }}>
+            {eyebrow}
             <h1 className="h1">Choose a paragraph to rework.</h1>
-            <p className="body">
-              Today you revise a whole paragraph, not one sentence. Change the ideas and the structure, not just the words. That&apos;s how
+            <p className="lead">
+              Today you revise a whole paragraph, not one sentence. Change the ideas and the structure, not just the words. That’s how
               experienced writers revise.
             </p>
           </div>
-          {candidates.length === 0 && <p className="body">There are no paragraphs from the last week left to revise.</p>}
-          <div className="stack gap-10">
+          {candidates.length === 0 && <div className="card flat" style={{ maxWidth: 820 }}><p className="body">There are no paragraphs from the last week left to revise.</p></div>}
+          <div className="grid3">
             {candidates.map((s) => (
-              <button key={s.id} className="card tight" style={{ textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }} onClick={() => setPickedId(s.id)}>
+              <button key={s.id} className="topic" style={{ textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }} onClick={() => setPickedId(s.id)}>
                 <span className="eyebrow">
                   {parseDay(s.date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })} · {TASKS[s.task]?.label}
                 </span>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>{s.topic}</span>
-                <span className="small">{s.text.slice(0, 110)}…</span>
+                <span className="h3">{s.topic}</span>
+                <span className="body" style={{ fontSize: 14, fontFamily: "var(--serif)" }}>{s.text.slice(0, 160)}…</span>
+                <span className="small">{s.words} words{s.feedback?.workOn ? ` · last time: ${s.feedback.workOn.label.toLowerCase()}` : ""}</span>
               </button>
             ))}
           </div>
-        </div>
-      </main>
+        </main>
+      </AppShell>
     );
   }
 
@@ -105,8 +101,10 @@ export default function RevisePage() {
       promptText: picked.promptText,
       frame: picked.frame,
       source: picked.source,
+      warmup: picked.warmup,
       focusId: picked.focusId,
       plan: picked.plan,
+      outline: picked.outline,
       text: text.trim(),
       words,
       writeSeconds: Math.round((Date.now() - startedAt) / 1000),
@@ -119,48 +117,62 @@ export default function RevisePage() {
   }
 
   return (
-    <main className="shell">
-      <div className="page" style={{ gap: 18 }}>
-        {header}
-        {picked.frame && <FrameLine frame={picked.frame} />}
-        <p className="body" style={{ fontSize: 16 }}>{picked.promptText}</p>
+    <AppShell>
+      <main className="container">
+        <div className="stack g8" style={{ maxWidth: 900 }}>
+          {eyebrow}
+          <p className="prompt" data-dict="Writeathon task">{picked.promptText}</p>
+        </div>
 
-        <section className="card tight" aria-labelledby="orig">
-          <h2 id="orig" className="eyebrow">Your original</h2>
-          <Marked
-            text={picked.text}
-            marks={fb ? [...(fb.workOn ? [{ quote: fb.workOn.said, className: "mark-work", label: "Rewrite" }] : []), ...fb.strengths.map((s) => ({ quote: s.quote, className: "mark-strength", label: "Went well" }))] : []}
-          />
-          {fb?.summary && <p className="small">{fb.summary}</p>}
-        </section>
+        <div style={{ display: "grid", gridTemplateColumns: "360px minmax(0, 1fr)", gap: 24, alignItems: "start" }}>
+          <aside className="stack g16">
+            <section className="card" aria-labelledby="orig">
+              <h2 id="orig" className="eyebrow">Your original</h2>
+              <Marked
+                text={picked.text}
+                marks={fb ? [...(fb.workOn ? [{ quote: fb.workOn.said, className: "mark-work", label: "Rewrite" }] : []), ...fb.strengths.map((s) => ({ quote: s.quote, className: "mark-strength", label: "Went well" }))] : []}
+              />
+              {fb?.summary && <p className="small">{fb.summary}</p>}
+            </section>
+            <section className="card flat" aria-labelledby="ask">
+              <h2 id="ask" className="eyebrow">Ask yourself</h2>
+              <ol className="stack g8" style={{ margin: 0, paddingLeft: 20 }}>
+                {CHECKLIST.map((c) => (
+                  <li key={c} className="body" style={{ fontSize: 14 }}>{c}</li>
+                ))}
+              </ol>
+              <p className="small">
+                {picked.outline?.length
+                  ? `Your plan was: ${picked.outline.map((o) => MOVES[o.move].label).join(" → ")}`
+                  : `The moves for this task: ${TASKS[picked.task]?.moves.join(" → ")}`}
+              </p>
+            </section>
+            {picked.source && <SourceCard source={picked.source} compact />}
+          </aside>
 
-        <section className="card tight" aria-labelledby="ask">
-          <h2 id="ask" className="eyebrow" style={{ fontWeight: 600 }}>Ask yourself</h2>
-          <ol className="moves">
-            {CHECKLIST.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ol>
-          <p className="small">The moves for this task: {TASKS[picked.task]?.moves.join(" → ")}</p>
-        </section>
-
-        <label htmlFor="revised" className="eyebrow" style={{ fontWeight: 600 }}>Your revised paragraph</label>
-        <textarea
-          id="revised"
-          className="editor"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onPaste={(e) => e.preventDefault()}
-          spellCheck={false}
-        />
-        <p className="small">{words} words</p>
-        <button className="btn" disabled={!changed || words < 20} onClick={submit}>
-          {changed ? "Submit revision" : "Make your changes, then submit"}
-        </button>
-        <button className="text-btn small" style={{ alignSelf: "flex-start", minHeight: 36 }} onClick={() => setPickedId(null)}>
-          Choose a different paragraph
-        </button>
-      </div>
-    </main>
+          <section className="panel stack" style={{ overflow: "hidden" }}>
+            <div className="row between" style={{ padding: "16px 24px", borderBottom: "1px solid var(--line)" }}>
+              <label htmlFor="revised" className="h3">Your revised paragraph</label>
+              <span className="small">{words} words</span>
+            </div>
+            <textarea
+              id="revised"
+              className="editor"
+              style={{ minHeight: 420 }}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onPaste={(e) => e.preventDefault()}
+              spellCheck={false}
+            />
+            <div className="row between" style={{ padding: "0 24px 20px" }}>
+              <button className="text-btn" onClick={() => setPickedId(null)}>Choose a different paragraph</button>
+              <button className="btn" disabled={!changed || words < 20} onClick={submit}>
+                {changed ? "Submit revision" : "Make your changes, then submit"}
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </AppShell>
   );
 }
