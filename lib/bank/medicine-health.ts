@@ -120,7 +120,7 @@ export const MEDICINE_HEALTH: DailyPrompt[] = [
       },
       {
         kind: "text",
-        text: "Results of subanalyses indicated that the level of social engagement was independently associated with physical frailty in the older group (over 75 years) but not in the younger group (60–74 years). Our results indicate that the strength of the association between social activity and physical frailty differs by the level of social participation.",
+        text: "Results of sub-analyses indicated that the level of social engagement was independently associated with physical frailty in the older group (over 75 years) but not in the younger group (60–74 years). Our results indicate that the strength of the association between social activity and physical frailty differs by the level of social participation.",
         cite: "Katayama et al. (2022)",
         authors: "Katayama, O., Lee, S., Bae, S., et al.",
         year: 2022,

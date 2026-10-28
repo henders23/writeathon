@@ -37,7 +37,7 @@ export const WARMUPS: DailyPrompt[] = [
         doi: "10.3389/frym.2020.00051",
         url: "https://www.frontiersin.org/articles/10.3389/frym.2020.00051/pdf",
         license: "CC BY",
-        section: "abstract",
+        section: "article",
       },
     ],
   },
