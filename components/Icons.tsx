@@ -135,3 +135,9 @@ export const Plus = ({ size = 16, color = "currentColor", strokeWidth = 2 }: P) 
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
+
+export const Bulb = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" />
+  </svg>
+);

@@ -16,14 +16,14 @@ export function outlineChecks(prompt: DailyPrompt, ids: MoveId[], sources: Sourc
   checks.push(
     first && openers.includes(first)
       ? { ok: true, text: `You open with ${MOVES[first].label.toLowerCase()}, so ${reader} knows straight away where you’re going.` }
-      : { ok: false, text: `Start with ${openers.map((m) => MOVES[m].label).join(" or ")}, so ${reader} knows your point first.` },
+      : { ok: false, text: `You could open with ${openers.map((m) => MOVES[m].label).join(" or ")}, so ${reader} knows your point first.` },
   );
   if (sources.length === 1) {
     const uses = ids.some((m) => m === "evidence" || m === "summarise" || m === "data");
     checks.push(
       uses
         ? { ok: true, text: `You plan to use ${sources[0].cite}.` }
-        : { ok: false, text: `The task asks you to use ${sources[0].cite}. Add Evidence${prompt.task === "data" ? " or Data" : " or Summarise"}.` },
+        : { ok: false, text: `The task mentions ${sources[0].cite}. You might add Evidence${prompt.task === "data" ? " or Data" : " or Summarise"} to use it.` },
     );
   } else if (sources.length > 1) {
     const sourceMoves = ids.filter((m) => m === "evidence" || m === "summarise" || m === "data").length;
@@ -31,25 +31,25 @@ export function outlineChecks(prompt: DailyPrompt, ids: MoveId[], sources: Sourc
     checks.push(
       synth
         ? { ok: true, text: `You plan to bring your ${sources.length} sources together with a Synthesise move.` }
-        : { ok: false, text: `With ${sources.length} sources, add Synthesise: show how they agree, differ or build on each other, rather than reporting them one by one.` },
+        : { ok: false, text: `With ${sources.length} sources, a Synthesise move could show how they agree, differ or build on each other, rather than reporting them one by one.` },
     );
-    if (sourceMoves === 0) checks.push({ ok: false, text: "Add Evidence or Summarise so the reader knows what the sources say." });
+    if (sourceMoves === 0) checks.push({ ok: false, text: "Consider Evidence or Summarise, so the reader knows what the sources say." });
   }
   if (prompt.task === "counter") {
     const both = ids.includes("concede") && ids.includes("counter");
-    checks.push(both ? { ok: true, text: "You concede and then counter: the heart of this task." } : { ok: false, text: "Answering a view needs both Concede and Counter." });
+    checks.push(both ? { ok: true, text: "You concede and then counter: the heart of this task." } : { ok: false, text: "Answering a view usually works best with both Concede and Counter." });
   }
   checks.push(
     last === "sowhat" || last === "recommend"
       ? { ok: true, text: "You end by saying why it matters." }
-      : { ok: false, text: `Nothing yet says why this matters to ${reader}. End with So what or Recommend.` },
+      : { ok: false, text: `You might end with So what or Recommend, to show ${reader} why this matters.` },
   );
   const extra = Math.max(0, sources.length - 1);
   const [lo, hi] = prompt.warmup ? [3, 5 + extra] : [3, 6 + extra];
   checks.push(
     ids.length >= lo && ids.length <= hi
       ? { ok: true, text: prompt.warmup ? "A good size for a short paragraph." : "A good size for one paragraph." }
-      : { ok: false, text: ids.length < lo ? `Plan at least ${lo} moves.` : `That’s a lot for one paragraph. Aim for ${lo} to ${hi} moves.` },
+      : { ok: false, text: ids.length < lo ? `Most paragraphs like this have at least ${lo} moves.` : `That’s a lot for one paragraph; ${lo} to ${hi} moves is typical.` },
   );
   return checks;
 }

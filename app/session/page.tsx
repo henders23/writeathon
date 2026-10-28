@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { SessionShell } from "@/components/AppShell";
-import { Check, Close, Eye } from "@/components/Icons";
+import { Bulb, Check, Close, Eye } from "@/components/Icons";
 import LastAttempt from "@/components/LastAttempt";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
@@ -364,18 +364,18 @@ function SessionFlow() {
               </div>
             </section>
 
-            <aside className="stack g16 desk-right" aria-label="Outline check">
+            <aside className="stack g16 desk-right" aria-label="Suggestions for your plan">
               <section className="card" aria-live="polite">
-                <span className="eyebrow">Outline check</span>
+                <span className="eyebrow">Suggestions for your plan</span>
                 {outline.length === 0 ? (
-                  <p className="body" style={{ fontSize: 14 }}>Add moves and I’ll check your plan against the task.</p>
+                  <p className="body" style={{ fontSize: 14 }}>Add moves and you’ll see suggestions based on the task.</p>
                 ) : (
                   <ul className="outline-list">
                     {checks.map((c) => (
                       <li key={c.text}>
-                        <span className={`mark ${c.ok ? "done" : "now"}`} aria-hidden="true">{c.ok ? <Check size={12} /> : "!"}</span>
+                        <span className={`mark ${c.ok ? "done" : "todo"}`} aria-hidden="true">{c.ok ? <Check size={12} /> : <Bulb size={13} />}</span>
                         <span className="body" style={{ fontSize: 14 }}>
-                          <span className="sr-only">{c.ok ? "Good: " : "To fix: "}</span>
+                          <span className="sr-only">{c.ok ? "Working well: " : "Suggestion: "}</span>
                           {c.text}
                         </span>
                       </li>
@@ -388,12 +388,12 @@ function SessionFlow() {
                 <strong>{focus.label}</strong>
                 <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{focus.why}</p>
               </section>
-              <button className="btn block" onClick={() => go("write")} disabled={outline.length === 0}>
+              <button className="btn block" onClick={() => go("write")}>
                 Start writing · {Math.round(target.seconds / 60)} minutes
               </button>
-              {outline.length === 0 && (
-                <button className="text-btn" style={{ alignSelf: "center" }} onClick={() => go("write")}>Skip planning today</button>
-              )}
+              <span className="small" style={{ textAlign: "center" }}>
+                {outline.length === 0 ? "Planning is optional, but it usually helps." : "Suggestions only: your plan is your choice."}
+              </span>
             </aside>
           </div>
         </main>

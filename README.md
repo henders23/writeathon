@@ -13,7 +13,7 @@ Students learn more from planning and revising than from drafting, so the sessio
 | Step | What happens |
 |---|---|
 | **Choose** | Three topics from the student's subject each day (or two short warm-ups for a new student), plus **Bring your own**: a question from their own module, or an extract they're reading |
-| **Plan** | The task is front and centre. The source sits in the left pane with **Help me understand this** (a plain-English summary and key words). The student builds an outline from 12 moves (or asks for a suggested shape) and an outline check flags a missing citation, a weak opening or no "so what" |
+| **Plan** | The task is front and centre. The source sits in the left pane with **Help me understand this** (a plain-English summary and key words). The student builds an outline from 12 moves (or asks for a suggested shape) and gets suggestions (never requirements) such as using the source, a clear opening or a "so what" |
 | **Write** | Five minutes on a three-pane desk: task and source, the editor, and a live coach that ticks off planned moves sentence by sentence and tracks today's focus. Pasting is off and long copied strings from the source are flagged |
 | **Ask** | The student picks the sentence they're least sure of and up to two things to ask about (my main view, linking, citing, sounding academic, grammar…), plus an optional question of their own |
 | **Feedback & rewrite** | The paragraph sentence by sentence with move labels and margin notes, answers to their questions, plan vs paragraph, then vs now on a repeated question, a model paragraph to compare with (after rewriting), and the rewrite with stepped hints and banking |
@@ -24,7 +24,7 @@ Feedback judges first how well the paragraph **works for its reader**: whether i
 
 ## One, two or three sources
 
-Before planning, students choose how many source extracts to draw on. One source means responding to it. Two or three mean synthesising: relating the sources to each other to make their own point. The plan gains a Synthesise move, the outline check and the live coach track every citation, the word target and writing time grow a little, and synthesis is assessed in the feedback. Students bringing their own material can add up to three extracts.
+Before planning, students choose how many source extracts to draw on. One source means responding to it. Two or three mean synthesising: relating the sources to each other to make their own point. The plan gains a Synthesise move, the plan suggestions and the live coach track every citation, the word target and writing time grow a little, and synthesis is assessed in the feedback. Students bringing their own material can add up to three extracts.
 
 ## Genuine sources
 
