@@ -54,3 +54,18 @@ export function longestCopiedRun(text: string, source: string): string {
   }
   return best;
 }
+
+const ABBREV = /(?:\bet al|\be\.g|\bi\.e|\betc|\bcf|\bvs|\bDr|\bProf|\bMr|\bMrs|\bMs|\bNo|\bFig|\bp|\bpp|\bc|\b[A-Z])\.$/;
+
+/** Split a paragraph into sentences (keeps the punctuation; copes with "et al." and initials). */
+export function splitSentences(text: string): string[] {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (!flat) return [];
+  const parts = flat.split(/(?<=[.!?]["”’)]*)\s+(?=["“(]?[A-Z0-9])/);
+  const out: string[] = [];
+  for (const part of parts) {
+    if (out.length && ABBREV.test(out[out.length - 1])) out[out.length - 1] += " " + part;
+    else out.push(part);
+  }
+  return out.map((x) => x.trim()).filter(Boolean);
+}

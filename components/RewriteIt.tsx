@@ -99,7 +99,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
   const canBank = result?.ok && (!needsTransfer || transferResult?.ok);
 
   return (
-    <div className="stack gap-12">
+    <div className="stack g12">
       <div className="field">
         <label htmlFor="rewrite" style={{ color: "var(--amber-deep)" }}>Rewrite it: edit your sentence</label>
         <textarea
@@ -123,8 +123,8 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
       ))}
 
       {!banked && !result?.ok && (
-        <div className="stack gap-8">
-          <button className="btn outline-amber" onClick={check} disabled={checking || unchanged || !attempt.trim()}>
+        <div className="stack g8">
+          <button className="btn amber" onClick={check} disabled={checking || unchanged || !attempt.trim()}>
             {checking ? "Checking…" : unchanged ? "Change your sentence, then check it" : result ? "Check again" : "Check my rewrite"}
           </button>
           {level < HINTS.length && (
@@ -142,7 +142,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
       )}
 
       {result?.ok && needsTransfer && !banked && (
-        <div className="stack gap-10" style={{ borderTop: "1px solid var(--amber-tint)", paddingTop: 4 }}>
+        <div className="stack g10" style={{ borderTop: "1px solid var(--amber-tint)", paddingTop: 4 }}>
           <div className="field">
             <label htmlFor="transfer" style={{ color: "var(--amber-deep)" }}>One more step: use it somewhere new</label>
             <span className="hint">
@@ -160,7 +160,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
             />
           </div>
           {!transferResult?.ok && (
-            <button className="btn outline-amber" onClick={checkTransfer} disabled={checking || transfer.trim().split(/\s+/).length < 5}>
+            <button className="btn amber" onClick={checkTransfer} disabled={checking || transfer.trim().split(/\s+/).length < 5}>
               {checking ? "Checking…" : transferResult ? "Check again" : "Check my new sentence"}
             </button>
           )}
@@ -176,11 +176,11 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
 
       {canBank && !banked && (
         <button className="btn" onClick={bank}>
-          <Bookmark color="var(--card)" size={18} /> Bank this sentence
+          <Bookmark color="var(--on-ink)" size={18} /> Bank this sentence
         </button>
       )}
       {banked && (
-        <p className="small row gap-6" role="status" style={{ color: "var(--blue)" }}>
+        <p className="small row g6" role="status" style={{ color: "var(--blue)" }}>
           <Bookmark size={16} color="var(--blue)" /> Banked. You&apos;ll fix it again from memory tomorrow, then at longer gaps.
         </p>
       )}

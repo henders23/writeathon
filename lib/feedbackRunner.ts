@@ -1,6 +1,7 @@
 "use client";
 
 import { postJSON } from "./api";
+import { splitSentences } from "./match";
 import { nextFocusAfter } from "./progress";
 import { getState, update } from "./store";
 import type { Feedback, RevisionResult } from "./types";
@@ -23,9 +24,14 @@ export function requestFeedback(sessionId: string): Promise<void> {
         frame: s.frame,
         promptText: s.promptText,
         source: s.source,
+        sources: s.sources,
         focusId: s.focusId,
         mode: s.mode,
         plan: s.plan,
+        outline: s.outline,
+        requests: s.requests,
+        requestNote: s.requestNote,
+        unsure: s.unsure !== undefined ? splitSentences(s.text)[s.unsure] : undefined,
         text: s.text,
         words: s.words,
         writeSeconds: s.writeSeconds,

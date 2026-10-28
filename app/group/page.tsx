@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import AppShell from "@/components/AppShell";
 import { Check } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
-import TabBar from "@/components/TabBar";
 import { FOCUS_BY_ID, ROWS } from "@/lib/content";
 import { addDays, dayKey } from "@/lib/dates";
 import { DISCIPLINE_LABEL } from "@/lib/disciplines";
@@ -55,95 +55,100 @@ export default function GroupPage() {
   ];
 
   return (
-    <main className="shell">
-      <div className="page with-tabs">
-        <div className="stack gap-4">
-          <h1 className="h1">{profile.group}</h1>
-          <p className="small" style={{ fontSize: 14 }}>{GROUP_SIZE} students · {DISCIPLINE_LABEL[profile.discipline] ?? "General"}</p>
+    <AppShell>
+      <main className="container">
+        <div className="row between wrap g16" style={{ alignItems: "flex-end" }}>
+          <div className="stack g6">
+            <p className="eyebrow">Your seminar group</p>
+            <h1 className="h1">{profile.group}</h1>
+            <p className="small" style={{ fontSize: 14 }}>{GROUP_SIZE} students · {DISCIPLINE_LABEL[profile.discipline] ?? "General"}</p>
+          </div>
         </div>
 
         <div className="notice">
-          <strong>Demo group.</strong> Your own streak is real. The classmates here are examples until shared seminar groups are switched
-          on.
+          <strong style={{ color: "var(--ink)" }}>Demo group.</strong> Your own streak is real. The classmates here are examples until shared seminar groups are switched on.
         </div>
 
-        <section className="card" style={{ padding: 16, gap: 12 }} aria-label="Group goal">
-          <div className="row between" style={{ alignItems: "baseline" }}>
-            <span style={{ fontSize: 15, fontWeight: 600 }}>Everyone writes today</span>
-            <span style={{ fontSize: 14, color: "var(--blue)", fontWeight: 600 }}>
-              {spokeCount} of {GROUP_SIZE}
-            </span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${GROUP_SIZE}, minmax(0, 1fr))`, gap: 4 }} aria-hidden="true">
-            {Array.from({ length: GROUP_SIZE }, (_, i) => (
-              <span key={i} style={{ height: 8, borderRadius: 4, background: i < spokeCount ? "var(--blue)" : "var(--line)" }} />
-            ))}
-          </div>
-          <p className="small">When all {GROUP_SIZE} write on the same day, the group streak grows.</p>
-        </section>
-
-        <section className="stack gap-12" aria-label="Leaderboard">
-          <div role="group" aria-label="Leaderboard view" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 4, background: "var(--sand)", borderRadius: 24, padding: 4 }}>
-            {(["streaks", "week"] as const).map((t) => (
-              <button
-                key={t}
-                aria-pressed={tab === t}
-                onClick={() => setTab(t)}
-                style={{ minHeight: 44, border: "none", borderRadius: 20, background: tab === t ? "var(--card)" : "transparent", color: "var(--ink)", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
-              >
-                {t === "streaks" ? "Streaks" : "This week"}
-              </button>
-            ))}
-          </div>
-          <div className="card" style={{ padding: "6px 12px", gap: 0 }}>
-            {sorted.map((p, i) => {
-              const rank = tab === "streaks" ? i + 1 : 1 + people.filter((q) => q.week > p.week).length;
-              return (
-                <div key={p.name} className="row gap-12" style={{ minHeight: 52, borderRadius: 12, padding: "0 6px", background: p.me ? "var(--amber-tint)" : "transparent" }}>
-                  <span style={{ width: 18, fontSize: 13, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{rank}</span>
-                  <span className={`avatar${p.me ? " me" : ""}`}>{p.initials}</span>
-                  <span className="grow" style={{ fontSize: 15, fontWeight: p.me ? 600 : 400 }}>{p.name}</span>
-                  {p.spoke && (
-                    <span role="img" aria-label="Wrote today">
-                      <Check size={16} color="var(--blue)" strokeWidth={2.4} />
-                    </span>
-                  )}
-                  <span className="serif" style={{ minWidth: 54, textAlign: "right", fontSize: 20, fontVariantNumeric: "tabular-nums" }}>
-                    {tab === "streaks" ? p.streak : `${p.week}/7`}
-                  </span>
-                </div>
-              );
-            })}
-            <p className="small" style={{ padding: "10px 6px 8px" }}>
-              {tab === "streaks" ? "Everyone keeping a streak is building the habit." : "Days written in the last 7. Everyone who writes every day shares first place."}
-            </p>
-          </div>
-        </section>
-
-        <section className="card blue" style={{ padding: 16, gap: 12 }} aria-label="Compare notes">
-          <div className="stack gap-4">
-            <span className="eyebrow blue">Compare notes · {ROWS[focus.row].label}</span>
-            <span style={{ fontSize: 15, lineHeight: 1.4 }}>Language you&apos;ve used for {focus.label.toLowerCase()} this week</span>
-          </div>
-          {wroteToday ? (
-            myPhrases.length ? (
-              <div className="row gap-8" style={{ flexWrap: "wrap" }}>
-                {myPhrases.map((p) => (
-                  <span key={p} className="serif" style={{ fontStyle: "italic", fontSize: 16, background: "var(--card)", borderRadius: 16, padding: "6px 12px" }}>
-                    {p}
-                  </span>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 400px", gap: 24, alignItems: "start" }}>
+          <section className="card" aria-label="Leaderboard" style={{ gap: 8 }}>
+            <div className="row between wrap g8">
+              <h2 className="h3">Leaderboard</h2>
+              <div role="group" aria-label="Leaderboard view" className="row g6">
+                {(["streaks", "week"] as const).map((t) => (
+                  <button key={t} className="chip" aria-pressed={tab === t} onClick={() => setTab(t)}>
+                    {t === "streaks" ? "Streaks" : "This week"}
+                  </button>
                 ))}
               </div>
-            ) : (
-              <p className="small" style={{ color: "#3B4A60" }}>None yet. Your focus examples are on the Today screen.</p>
-            )
-          ) : (
-            <p className="small" style={{ color: "#3B4A60" }}>Opens once you&apos;ve written today.</p>
-          )}
-          <p className="small" style={{ color: "#3B4A60" }}>When groups are live, you&apos;ll see your classmates’ phrases too, and read two anonymous paragraphs on the same question to pick the clearer one.</p>
-        </section>
-      </div>
-      <TabBar />
-    </main>
+            </div>
+            <div className="stack">
+              {sorted.map((p, i) => {
+                const rank = tab === "streaks" ? i + 1 : 1 + people.filter((q) => q.week > p.week).length;
+                return (
+                  <div
+                    key={p.name}
+                    className="row g12"
+                    style={{ minHeight: 54, borderRadius: 12, padding: "0 10px", background: p.me ? "var(--amber-tint)" : "transparent", borderBottom: p.me ? "none" : "1px solid var(--line)" }}
+                  >
+                    <span style={{ width: 22, fontSize: 13, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{rank}</span>
+                    <span className="round-btn avatar" style={{ width: 34, height: 34, cursor: "default" }} aria-hidden="true">{p.initials}</span>
+                    <span className="grow" style={{ fontSize: 15, fontWeight: p.me ? 600 : 400 }}>{p.name}</span>
+                    {p.spoke && (
+                      <span role="img" aria-label="Wrote today">
+                        <Check size={16} color="var(--blue)" strokeWidth={2.4} />
+                      </span>
+                    )}
+                    <span className="num" style={{ minWidth: 60, textAlign: "right", fontSize: 22 }}>
+                      {tab === "streaks" ? p.streak : `${p.week}/7`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="small">
+              {tab === "streaks" ? "Everyone keeping a streak is building the habit." : "Days written in the last 7. Everyone who writes every day shares first place."}
+            </p>
+          </section>
+
+          <aside className="stack g16">
+            <section className="card" aria-label="Group goal">
+              <div className="row between" style={{ alignItems: "baseline" }}>
+                <strong style={{ fontSize: 15 }}>Everyone writes today</strong>
+                <span style={{ fontSize: 14, color: "var(--blue)", fontWeight: 600 }}>{spokeCount} of {GROUP_SIZE}</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${GROUP_SIZE}, minmax(0, 1fr))`, gap: 4 }} aria-hidden="true">
+                {Array.from({ length: GROUP_SIZE }, (_, i) => (
+                  <span key={i} style={{ height: 8, borderRadius: 4, background: i < spokeCount ? "var(--chart-blue)" : "var(--line)" }} />
+                ))}
+              </div>
+              <p className="small">When all {GROUP_SIZE} write on the same day, the group streak grows.</p>
+            </section>
+
+            <section className="card blue" aria-label="Compare notes">
+              <span className="eyebrow blue">Compare notes · {ROWS[focus.row].label}</span>
+              <span style={{ fontSize: 15, lineHeight: 1.4, color: "var(--blue-strong)" }}>Language you’ve used for {focus.label.toLowerCase()} this week</span>
+              {wroteToday ? (
+                myPhrases.length ? (
+                  <div className="row g8 wrap">
+                    {myPhrases.map((p) => (
+                      <span key={p} className="serif" style={{ fontStyle: "italic", fontSize: 16, background: "var(--card)", borderRadius: 16, padding: "6px 12px" }}>
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="small" style={{ color: "var(--blue)" }}>None yet. Your focus examples are on the Today screen.</p>
+                )
+              ) : (
+                <p className="small" style={{ color: "var(--blue)" }}>Opens once you’ve written today.</p>
+              )}
+              <p className="small" style={{ color: "var(--blue)" }}>
+                When groups are live, you’ll see your classmates’ phrases too, and read two anonymous paragraphs on the same question to pick the clearer one.
+              </p>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </AppShell>
   );
 }

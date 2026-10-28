@@ -1,18 +1,27 @@
-import { FOCUSES, ROWS, ROW_IDS } from "./content";
+import { BANDS, CRITERIA, CRITERION_IDS, FOCUSES, MOVES, MOVE_IDS, ROWS, ROW_IDS } from "./content";
 
 /* ---------- Feedback on today's paragraph ---------- */
 
-export const FEEDBACK_INSTRUCTIONS = `You are an expert EAP (English for Academic Purposes) tutor giving feedback on ONE academic paragraph that a university student wrote in about five minutes as daily practice. Their English may be anywhere from B1 to C1. The paragraph is a timed first draft, so judge it as one: notice what is working, and choose the single most useful thing to improve.
+export const FEEDBACK_INSTRUCTIONS = `You are an expert EAP (English for Academic Purposes) tutor giving feedback on ONE academic paragraph that a university student wrote in a few minutes as daily practice. Their English may be anywhere from B1 to C1. The paragraph is a timed first draft, so judge it as one.
+
+WHAT MATTERS MOST: EFFECTIVENESS, NOT CORRECTNESS
+- Judge first and foremost how well the paragraph WORKS for its reader and purpose: does it answer the question, make a clear point, develop it with reasons and evidence, use its source(s) well, and move the reader through a purposeful sequence of moves to a "so what"? Language matters only as far as it helps or hinders that.
+- Do not let surface errors dominate. A paragraph with small grammar slips but a clear, well-supported, well-structured argument is a strong paragraph. A grammatically perfect paragraph that lists facts without a point is a weak one.
+- Choose the ONE thing to work on that would most improve the paragraph's effectiveness: usually a move that is missing, weak or out of place (a vague opening, evidence not explained, sources reported one after another without being related, no "so what"), a claim stated more strongly than the evidence allows, or a link the reader cannot follow. Choose a language point only if it blocks meaning, or if it is today's focus or what the student asked about.
 
 PRINCIPLES
-- Focused, not comprehensive: one thing to work on, preferably today's focus if there is a clear gap there. Do not list every error.
+- Focused, not comprehensive: one thing to work on, preferably today's focus if there is a clear gap there; otherwise the change with the greatest effect.
 - Never rewrite the whole paragraph. The student will revise one sentence themselves.
 - Be specific, kind and honest. Write in plain British English a B1 student can follow. One or two short sentences per comment.
 - Every quote you give MUST be copied exactly, character for character, from the student's paragraph (the app highlights it), and should be a whole sentence or a clear clause.
-- If the paragraph uses the source, check paraphrasing: an unmarked copied string of four or more words from the source is a gap in Sources. Practice sources are attributed to fictional authors; that is expected, so cite them normally.
+- The student planned the paragraph as a sequence of moves (STUDENT'S OUTLINE). Comment on whether the moves they chose, and the order, serve the task.
+- If the student said which sentence they were least sure about, consider it, but choose the sentence to work on on its merits.
+- SOURCES: the extracts are genuine published research. Check that the student has understood each source, put it in their own words (an unmarked copied string of four or more words is a gap), cited it correctly, and used it to support their own point. When there are TWO OR MORE sources, synthesis is central: reward relating the sources to each other (agreement, contrast, one qualifying or extending the other) in the service of the student's own argument; a paragraph that summarises source A then source B without connecting them has a gap in synthesis.
 - Ignore spelling slips that do not affect meaning, unless they are systematic.
 - Judge the paragraph by the conventions of the student's DISCIPLINE and the GENRE and READER given. Disciplines differ: "I argue" is normal in many humanities and social science genres but unusual in a science results section; passive voice, hedging norms, how much to define terms, and how evidence is used all vary. Never impose one register on every discipline. A non-specialist reader needs key terms explained; a specialist reader does not.
-- Where it matters, comment on fit to genre and reader (e.g. a briefing for a council should lead with the recommendation).
+
+EFFECTIVENESS PROFILE (aligned to CEFR Companion Volume (2020) scales for written production and mediation). For each criterion give an INDICATIVE CEFR level for what this paragraph shows (A2, B1, B1+, B2, B2+, C1, C2), or "n/a" if it is not tested (e.g. synthesis with only one source, sources with none). Base the level on what the paragraph does, judged against the descriptors for that scale, not on error counts. One paragraph is limited evidence, so be measured.
+${CRITERION_IDS.map((c) => `- ${c} (${CRITERIA[c].label}; CEFR: ${CRITERIA[c].cefr}): ${CRITERIA[c].asks}`).join("\n")}
 
 THE PATTERN: five areas.
 ${ROW_IDS.map((r) => `- ${r} (${ROWS[r].label}): ${ROWS[r].rubric}`).join("\n")}
@@ -22,6 +31,9 @@ ${FOCUSES.map((f) => `- ${f.id} [${f.row}] ${f.label}: ${f.rubric}`).join("\n")}
 
 RETURN
 - summary: one encouraging sentence about the paragraph as a whole.
+- readerEffect: one or two sentences on how well the paragraph works for its reader and purpose: what a reader would take away, and what would make it land better.
+- movesComment: one or two sentences on the sequence of moves as a whole: does the paragraph open, develop and close purposefully for this task? Mention the student's outline if relevant.
+- effectiveness: one entry for EACH criterion above, in that order: criterion id, band, comment (one sentence on effectiveness, specific to this paragraph), quote (an exact short quote that best shows it, or "").
 - strengths: exactly two things that went well, from different areas if possible, each with the exact quote. If the paragraph is very short, one or zero.
 - workOn: ONE thing to work on, as a sentence the student can revise.
   - said: the exact sentence (or clause) from the paragraph.
@@ -37,6 +49,9 @@ RETURN
 - focusQuote: the student's best sentence showing today's focus, or "".
 - nextFocusSuggestion: the focus id you would target next.
 - hunt: only in Phrase Hunt mode, one entry per target item in the order given. verdict "natural" = used accurately and appropriately; "close" = used but form or function not quite right (show a corrected example in note); "missed" = not used. A forced or meaningless use is "close". quote = the student's sentence ("" if missed). In normal mode return an empty list.
+- sentences: the WHOLE paragraph split into its sentences, in order, each copied exactly. For each, "move" is what the sentence does (choose from: ${MOVE_IDS.map((m) => `${m} = ${MOVES[m].does}`).join("; ")}). kind is "work" for exactly the sentence in workOn.said, "strength" for sentences quoted in strengths, otherwise "none". effect: how well the sentence does its move for the reader ("strong", "partial" or "weak"). note: a short margin note (under 25 words) a tutor would write beside it about how well it does its job (not about grammar unless grammar blocks meaning); for every sentence, not just strengths.
+- requestAnswers: the student may have asked for feedback on specific things (STUDENT ASKED ABOUT). Answer EACH one directly in one or two sentences, pointing to sentence numbers or quoting briefly. If they asked nothing, return an empty list. If they wrote a free-text question, answer it too (request = their question).
+- modelParagraph: a model answer to the same prompt for the same reader, at a level just above the student's (B2-C1), similar length to the student's target, using and citing the SAME sources as the student (and synthesising them if there are two or more). It must show today's focus well. Do not copy the student's sentences.
 - transfer: for each RECENTLY BANKED pattern (if any are given) that the student used again correctly in today's paragraph, unprompted, give its label exactly as given and the exact quote. This is evidence of real learning, so only include clear, correct reuse. Otherwise an empty list.`;
 
 const evidence = { type: "string", enum: ["S", "G", "N"] };
@@ -47,9 +62,25 @@ const str = { type: "string" };
 export const FEEDBACK_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["summary", "strengths", "workOn", "rowEvidence", "focusEvidence", "focusUsedCount", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion", "hunt", "transfer"],
+  required: ["summary", "readerEffect", "movesComment", "effectiveness", "strengths", "workOn", "rowEvidence", "focusEvidence", "focusUsedCount", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion", "hunt", "transfer", "sentences", "requestAnswers", "modelParagraph"],
   properties: {
     summary: str,
+    readerEffect: str,
+    movesComment: str,
+    effectiveness: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["criterion", "band", "comment", "quote"],
+        properties: {
+          criterion: { type: "string", enum: [...CRITERION_IDS] },
+          band: { type: "string", enum: [...BANDS, "n/a"] },
+          comment: str,
+          quote: str,
+        },
+      },
+    },
     strengths: {
       type: "array",
       items: {
@@ -102,6 +133,26 @@ export const FEEDBACK_SCHEMA = {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["label", "quote"], properties: { label: str, quote: str } },
     },
+    sentences: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["text", "move", "kind", "effect", "note"],
+        properties: {
+          text: str,
+          move: { type: "string", enum: [...MOVE_IDS] },
+          kind: { type: "string", enum: ["strength", "work", "none"] },
+          effect: { type: "string", enum: ["strong", "partial", "weak"] },
+          note: str,
+        },
+      },
+    },
+    requestAnswers: {
+      type: "array",
+      items: { type: "object", additionalProperties: false, required: ["request", "answer"], properties: { request: str, answer: str } },
+    },
+    modelParagraph: str,
   },
 } as const;
 
@@ -213,5 +264,51 @@ export const REVISION_SCHEMA = {
     },
     deeper: { type: "boolean" },
     nextStep: str,
+  },
+} as const;
+
+/* ---------- Dictionary ---------- */
+
+export const DEFINE_INSTRUCTIONS = `You write entries for a learner's academic English dictionary. Students are university students with English at B1-C1. Given a word or short phrase, the sentence it appeared in, and the student's subject, return:
+- headword: the dictionary form (e.g. "mitigate" for "mitigating"; keep a phrase as a phrase).
+- partOfSpeech: e.g. "verb", "noun (uncountable)", "adjective", "phrase".
+- definition: the meaning IN THIS CONTEXT, in plain English, under 20 words, without using the word itself.
+- example: a NEW natural academic sentence using the word in the same sense (not the original sentence).
+- collocations: 2-4 common academic collocations or patterns (e.g. "mitigate the risk of", "help to mitigate").
+- distractors: 3 wrong but plausible definitions of similar length and style, for a multiple-choice quiz.
+- wrongWords: 3 real words of the same part of speech that do NOT fit the example sentence, for a gap-fill quiz.
+British English.`;
+
+export const DEFINE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["headword", "partOfSpeech", "definition", "example", "collocations", "distractors", "wrongWords"],
+  properties: {
+    headword: str,
+    partOfSpeech: str,
+    definition: str,
+    example: str,
+    collocations: { type: "array", items: str },
+    distractors: { type: "array", items: str },
+    wrongWords: { type: "array", items: str },
+  },
+} as const;
+
+export const USE_CHECK_INSTRUCTIONS = `A student learning academic English is practising a vocabulary item by writing their own sentence with it. Decide whether the sentence uses the word correctly, with the right meaning, grammar and typical collocation, in a way that would suit academic writing.
+ok = true if it does (small unrelated slips are fine). comment: one short, encouraging sentence in plain British English; if not ok, say what to change.`;
+
+/* ---------- Help me understand ---------- */
+
+export const EXPLAIN_INSTRUCTIONS = `A university student (English B1-B2) is reading a short extract from an academic article before writing about it. Help them understand it WITHOUT writing their paragraph for them.
+- plain: the extract's main point in plain English, 2-3 short sentences, under 60 words. Do not add opinions or new facts.
+- keyWords: up to 4 harder words or phrases from the extract, each with a short plain meaning (under 12 words).`;
+
+export const EXPLAIN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["plain", "keyWords"],
+  properties: {
+    plain: str,
+    keyWords: { type: "array", items: { type: "object", additionalProperties: false, required: ["word", "meaning"], properties: { word: str, meaning: str } } },
   },
 } as const;
