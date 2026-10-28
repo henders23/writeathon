@@ -131,7 +131,7 @@ export const PSYCHOLOGY: DailyPrompt[] = [
       journal: "Frontiers in Psychology",
       doi: "10.3389/fpsyg.2021.666724",
       url: "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.666724/full",
-      license: "CC BY 4.0",
+      license: "CC BY",
       section: "abstract",
     },
   },
