@@ -113,7 +113,7 @@ export const ENGINEERING: DailyPrompt[] = [
     more: [
       {
         kind: "data",
-        text: "The embodied energy of the mass-timber building was 37% higher than that of its equivalent concrete building and its envelope design helped reduce space-conditioning emissions by as much as 83%, from 187 kg CO₂ eq/m² as estimated for the equivalent concrete building to 31 kg CO₂ eq/m² 50-yr.",
+        text: "The embodied energy of the mass-timber building was 37% higher than that of its equivalent concrete building and its envelope design helped reduce space-conditioning emissions by as much as 83%, from 187 kg CO2 eq/m2 as estimated for the equivalent concrete building to 31 kg CO2 eq/m2 50-yr.",
         cite: "Felmer et al. (2022)",
         authors: "Felmer, G., Morales-Vera, R., Astroza, R., et al.",
         year: 2022,
