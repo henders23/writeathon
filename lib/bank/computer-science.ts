@@ -152,7 +152,7 @@ export const COMPUTER_SCIENCE: DailyPrompt[] = [
       kind: "data",
       text: "The most significant number of accessibility barriers relate to contrast errors that must be corrected for e-commerce websites to reach an acceptable level of accessibility. The most neglected accessibility principle is perceivable, representing 83.1%, followed by operable with 13.7%, in third place is robust with 1.7% and finally understandable with 1.5%.",
       cite: "Acosta-Vargas et al. (2022)",
-      authors: "Acosta-Vargas, P., Salvador-Acosta, B., Salvador-Ullauri, L., et al.",
+      authors: "Acosta-Vargas et al.",
       year: 2022,
       title: "Accessibility challenges of e-commerce websites",
       journal: "PeerJ Computer Science",

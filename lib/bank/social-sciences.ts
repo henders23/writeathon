@@ -158,7 +158,7 @@ export const SOCIAL_SCIENCES: DailyPrompt[] = [
       journal: "Frontiers in Sociology",
       doi: "10.3389/fsoc.2026.1862733",
       url: "https://www.frontiersin.org/journals/sociology/articles/10.3389/fsoc.2026.1862733/full",
-      license: "CC BY 4.0",
+      license: "CC BY",
       section: "abstract",
     },
   },

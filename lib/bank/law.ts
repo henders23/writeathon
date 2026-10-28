@@ -139,7 +139,7 @@ export const LAW: DailyPrompt[] = [
       journal: "PLOS ONE",
       doi: "10.1371/journal.pone.0247959",
       url: "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0247959",
-      license: "CC BY 4.0",
+      license: "CC BY",
       section: "abstract",
     },
   },
