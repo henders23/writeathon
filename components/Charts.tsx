@@ -11,31 +11,58 @@ export function ChartCard({
   children,
   table,
   legend,
-  span = 1,
+  aside,
+  variant = "card",
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   table?: React.ReactNode;
   legend?: React.ReactNode;
-  span?: 1 | 2 | 3;
+  /** A short note shown at the right of a folded row. */
+  aside?: React.ReactNode;
+  /** "hero" is the page's one raised panel; "fold" is a collapsed row that opens on demand. */
+  variant?: "card" | "hero" | "fold";
 }) {
   const [asTable, setAsTable] = useState(false);
-  return (
-    <section className="card" style={{ gridColumn: `span ${span}` }} aria-label={title}>
-      <div className="row between g8" style={{ alignItems: "flex-start" }}>
-        <div className="stack g4">
-          <h2 className="h3">{title}</h2>
-          {subtitle && <span className="small">{subtitle}</span>}
-        </div>
-        {table && (
-          <button className="text-btn" style={{ fontSize: 13, whiteSpace: "nowrap" }} onClick={() => setAsTable((v) => !v)} aria-pressed={asTable}>
-            {asTable ? "View as chart" : "View as table"}
-          </button>
-        )}
-      </div>
+  const toggle = table && (
+    <button className="text-btn" style={{ fontSize: 13, whiteSpace: "nowrap" }} onClick={() => setAsTable((v) => !v)} aria-pressed={asTable}>
+      {asTable ? "View as chart" : "View as table"}
+    </button>
+  );
+  const body = (
+    <>
       {legend && !asTable && <div className="legend">{legend}</div>}
       {asTable ? table : children}
+    </>
+  );
+  if (variant === "fold") {
+    return (
+      <details className="more">
+        <summary>
+          {title}
+          {aside && <span className="aside">{aside}</span>}
+        </summary>
+        <div className="more-body">
+          <div className="row between g8" style={{ alignItems: "flex-start" }}>
+            <span className="small">{subtitle}</span>
+            {toggle}
+          </div>
+          {body}
+        </div>
+      </details>
+    );
+  }
+  return (
+    <section className={variant === "hero" ? "panel hero" : "card"} aria-label={title}>
+      <div className="row between g8" style={{ alignItems: "flex-start" }}>
+        <div className="stack g4">
+          <h2 className={variant === "hero" ? "h2" : "h3"}>{title}</h2>
+          {subtitle && <span className="small">{subtitle}</span>}
+        </div>
+        {toggle}
+      </div>
+      {body}
     </section>
   );
 }

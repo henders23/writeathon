@@ -2,21 +2,13 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { Book, Bookmark, Plus, Repeat, Scissors, Search } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
-import { TASKS } from "@/lib/content";
 import { dayKey } from "@/lib/dates";
-import { bestHuntThisWeek, bestSurgeryThisWeek, dictDue, dueBankItems, revisionCandidates, todaysChoices } from "@/lib/progress";
+import { bestHuntThisWeek, bestSurgeryThisWeek, dictDue, dueBankItems, revisionCandidates, revisionDue, todaysChoices } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
 
-function Count({ n, label }: { n: number; label: string }) {
-  return (
-    <span className={`pill ${n > 0 ? "amber" : "grey"}`}>
-      {n} {label}
-    </span>
-  );
-}
+type Drill = { id: string; title: string; note: string; href: string; go: string; due?: number };
 
 export default function PracticePage() {
   const state = useAppState();
@@ -25,110 +17,102 @@ export default function PracticePage() {
 
   const today = dayKey();
   const { profile, sessions, bank, dictionary, surgeryRuns } = state;
-  const choices = todaysChoices(profile, sessions, today);
+  const [topic] = todaysChoices(profile, sessions, today);
   const bankDue = dueBankItems(bank, today, 99).length;
   const wordsDue = dictDue(dictionary, today).length;
   const toRevise = revisionCandidates(sessions, today).length;
   const bestSurgery = bestSurgeryThisWeek(surgeryRuns, today);
   const bestHunt = bestHuntThisWeek(sessions, today);
 
+  const drills: Drill[] = [
+    {
+      id: "bank",
+      title: bankDue ? `Fix ${bankDue} banked sentence${bankDue === 1 ? "" : "s"} from memory` : "Bank review",
+      note: bankDue ? "Sentences you banked come back at growing gaps, so the fix sticks." : "Nothing due today. Open your bank to see what you’ve fixed.",
+      href: bankDue ? "/review" : "/bank",
+      go: bankDue ? "Review now" : "Open your bank",
+      due: bankDue,
+    },
+    {
+      id: "words",
+      title: wordsDue ? `Quiz ${Math.min(10, wordsDue)} word${wordsDue === 1 ? "" : "s"} from your dictionary` : "Dictionary quiz",
+      note: dictionary.length
+        ? wordsDue
+          ? "Meaning, gap-fill, recall and use, for the words that are due today."
+          : "No words due today. Open your dictionary to see what you’ve collected."
+        : "Select any word in a source or in your feedback to add it to your dictionary.",
+      href: wordsDue ? "/dictionary/quiz" : "/dictionary",
+      go: wordsDue ? "Start quiz" : "Open your dictionary",
+      due: wordsDue,
+    },
+    {
+      id: "revise",
+      title: "Revise a paragraph",
+      note: toRevise
+        ? `Rework a whole paragraph from this week: its ideas and structure, not just words. ${toRevise} to choose from.`
+        : "Rework a whole paragraph: its ideas and structure, not just words.",
+      href: "/revise",
+      go: toRevise ? "Choose a paragraph" : "See how it works",
+      due: revisionDue(sessions, today) ? 1 : 0,
+    },
+    {
+      id: "surgery",
+      title: "Sentence Surgery",
+      note: `Join short sentences into one academic sentence. 90 seconds${bestSurgery !== null ? ` · your best this week: ${bestSurgery}` : ""}.`,
+      href: "/surgery",
+      go: "Play",
+    },
+    ...(topic
+      ? [
+          {
+            id: "hunt",
+            title: "Phrase Hunt",
+            note: `Study five phrases, then use them in a paragraph on “${topic.topic}”. About 7 minutes${bestHunt !== null ? ` · your best this week: ${bestHunt}` : ""}.`,
+            href: `/hunt?topic=${encodeURIComponent(topic.id)}`,
+            go: "Start",
+          },
+        ]
+      : []),
+    {
+      id: "own",
+      title: "Bring your own topic or source",
+      note: "Practise on a question from your module, or a short extract from something you’re reading.",
+      href: "/own?type=topic",
+      go: "Set it up",
+    },
+  ];
+  // The one thing to do: whatever is due comes first; otherwise the quickest game.
+  const first = drills.find((d) => d.due) ?? drills.find((d) => d.id === "surgery")!;
+  const rest = drills.filter((d) => d !== first);
+
   return (
     <AppShell>
-      <main className="container">
-        <div className="stack g8">
-          <p className="eyebrow">Training ground</p>
+      <main className="container focus">
+        <div className="stack g6">
+          <p className="small">Short drills for the skills behind good paragraphs</p>
           <h1 className="h1">Practice</h1>
-          <p className="lead" style={{ maxWidth: 760 }}>Short drills for the skills behind good paragraphs. Use them on days you want more, or when something comes back for review.</p>
         </div>
 
-        <section className="stack g12" aria-labelledby="games-h">
-          <h2 id="games-h" className="h2">Quick games</h2>
-          <div className="grid2">
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow blue row g6"><Scissors size={16} color="var(--blue)" /> Sentence Surgery</span>
-                <span className="small">90 seconds</span>
-              </div>
-              <strong style={{ fontSize: 18 }}>Join short sentences into one academic sentence</strong>
-              <p className="body" style={{ fontSize: 14 }}>Three operations against the clock. Builds the sentence control that lets you pack ideas together clearly.</p>
-              <div className="row between" style={{ marginTop: "auto" }}>
-                <span className="small">{bestSurgery !== null ? `Your best this week: ${bestSurgery}` : "No runs this week yet"}</span>
-                <Link className="btn small" href="/surgery">Play</Link>
-              </div>
-            </article>
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow amber row g6"><Search size={16} color="var(--amber)" /> Phrase Hunt</span>
-                <span className="small">about 7 minutes</span>
-              </div>
-              <strong style={{ fontSize: 18 }}>Study five phrases, then use them in a paragraph</strong>
-              <p className="body" style={{ fontSize: 14 }}>A full paragraph with a game on top. Choose one of today’s topics.</p>
-              <div className="stack g8" style={{ marginTop: "auto" }}>
-                {choices.map((p) => (
-                  <Link key={p.id} href={`/hunt?topic=${encodeURIComponent(p.id)}`} className="row g10" style={{ textDecoration: "none", color: "var(--ink)" }}>
-                    <span className="grow">
-                      <strong style={{ fontSize: 14 }}>{p.topic}</strong>
-                      <span className="small"> · {TASKS[p.task].label}</span>
-                    </span>
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                ))}
-                {bestHunt !== null && <span className="small">Your best this week: {bestHunt}</span>}
-              </div>
-            </article>
+        <section className="panel hero" aria-labelledby="first-h">
+          <p className="eyebrow">{first.due ? "Due today" : "Quick game"}</p>
+          <h2 id="first-h" className="h2" style={{ fontSize: 32, lineHeight: 1.15 }}>{first.title}</h2>
+          <p className="lead">{first.note}</p>
+          <div className="row g20 wrap" style={{ marginTop: 12 }}>
+            <Link className="btn big" href={first.href}>{first.go}</Link>
           </div>
         </section>
 
-        <section className="stack g12" aria-labelledby="review-h">
-          <h2 id="review-h" className="h2">Make it stick</h2>
-          <div className="grid3">
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow row g6"><Bookmark size={16} color="var(--blue)" /> Bank review</span>
-                <Count n={bankDue} label="due" />
-              </div>
-              <p className="body" style={{ fontSize: 14 }}>Fix sentences you banked again, from memory, at growing gaps.</p>
-              <Link className={`btn small${bankDue ? "" : " secondary"}`} style={{ marginTop: "auto", alignSelf: "flex-start" }} href={bankDue ? "/review" : "/bank"}>
-                {bankDue ? "Review now" : "Open your bank"}
-              </Link>
-            </article>
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow row g6"><Book size={16} color="var(--blue)" /> Dictionary quiz</span>
-                <Count n={wordsDue} label="due" />
-              </div>
-              <p className="body" style={{ fontSize: 14 }}>
-                {dictionary.length
-                  ? `Quiz yourself on the ${dictionary.length} word${dictionary.length === 1 ? "" : "s"} you’ve collected: meaning, gap-fill, recall and use.`
-                  : "Select any word in a source or in your feedback to add it to your dictionary. Then quiz yourself here."}
-              </p>
-              <Link className={`btn small${wordsDue ? "" : " secondary"}`} style={{ marginTop: "auto", alignSelf: "flex-start" }} href={wordsDue ? "/dictionary/quiz" : "/dictionary"}>
-                {wordsDue ? "Start quiz" : "Open your dictionary"}
-              </Link>
-            </article>
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow row g6"><Repeat size={16} color="var(--blue)" /> Revise a paragraph</span>
-                <Count n={toRevise} label="to choose from" />
-              </div>
-              <p className="body" style={{ fontSize: 14 }}>Rework a whole paragraph from this week: its ideas and structure, not just words.</p>
-              <Link className={`btn small${toRevise ? "" : " secondary"}`} style={{ marginTop: "auto", alignSelf: "flex-start" }} href="/revise">
-                {toRevise ? "Choose a paragraph" : "See how revision works"}
-              </Link>
-            </article>
-          </div>
-        </section>
-
-        <section className="card" style={{ flexDirection: "row", alignItems: "center", gap: 20, flexWrap: "wrap" }} aria-label="Bring your own">
-          <span className="move-num" style={{ background: "var(--blue-tint)", color: "var(--blue)" }}><Plus /></span>
-          <div className="stack g4 grow">
-            <strong style={{ fontSize: 16 }}>Bring your own topic or source</strong>
-            <span className="body" style={{ fontSize: 14 }}>Practise on a question from your module, or a short extract from something you’re reading.</span>
-          </div>
-          <div className="row g8 wrap">
-            <Link className="btn secondary small" href="/own?type=topic">My own topic</Link>
-            <Link className="btn secondary small" href="/own?type=source">My own source</Link>
-          </div>
+        <section className="stack g12" aria-labelledby="rest-h">
+          <h2 id="rest-h" className="h2" style={{ fontSize: 24 }}>Or practise something else</h2>
+          {rest.map((d) => (
+            <Link key={d.id} className="alt-topic" href={d.href}>
+              <span className="stack g4">
+                <strong>{d.title}</strong>
+                <span className="small">{d.note}</span>
+              </span>
+              <span className="go">{d.go} →</span>
+            </Link>
+          ))}
         </section>
       </main>
     </AppShell>

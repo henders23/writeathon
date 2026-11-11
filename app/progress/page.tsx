@@ -80,82 +80,9 @@ export default function ProgressPage() {
     }
   }
 
-  return (
-    <AppShell>
-      <main className="container">
-        <div className="row between wrap g16" style={{ alignItems: "flex-end" }}>
-          <div className="stack g6">
-            <p className="eyebrow">Your progress</p>
-            <h1 className="h1">{recap?.headline ?? "How your writing is growing"}</h1>
-          </div>
-          <span className="small">Current focus: <strong style={{ color: "var(--ink)" }}>{focus?.label}</strong></span>
-        </div>
-
-        <section className="grid4" aria-label="Headline numbers" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
-          <Tile value={h.paragraphs} label="paragraphs written" />
-          <Tile value={h.words.toLocaleString("en-GB")} label="words written" />
-          <Tile value={h.streak} label={`day streak · best ${Math.max(h.best, h.streak)}`} />
-          <Tile value={h.perFive ?? "–"} label="words per 5 minutes" />
-          <Tile value={h.banked} label="sentences banked" />
-          <Tile value={h.dictionary} label={`words collected · ${h.mastered} mastered`} />
-        </section>
-
-        {recap?.thenNow && (
-          <section className="card amber" aria-label="Then and now">
-            <div className="row between wrap g8">
-              <span className="eyebrow amber">Week {recap.weekNumber} · {recap.thenNow.focusLabel}: then and now</span>
-              <button className="text-btn" onClick={share}>{shared ? "Copied" : "Share"}</button>
-            </div>
-            <div className="grid2">
-              <div className="stack g4">
-                <span className="small">Then</span>
-                <p className="bank-before" style={{ fontSize: 18 }}>“{recap.thenNow.then}”</p>
-              </div>
-              <div className="stack g4">
-                <span className="small" style={{ color: "var(--amber-text)", fontWeight: 600 }}>Now</span>
-                <p className="bank-after" style={{ fontSize: 19 }}>“{recap.thenNow.now}”</p>
-              </div>
-            </div>
-          </section>
-        )}
-
-        <div className="grid3" style={{ alignItems: "start" }}>
-          {crit.rows.length > 0 && (
-            <ChartCard
-              span={2}
-              title="How effective your writing is: then and now"
-              subtitle="Indicative CEFR-aligned levels for each criterion, averaged over your first paragraphs and your latest ones. Effectiveness first; language last."
-              legend={
-                <>
-                  <span><Swatch color="var(--chart-blue-light)" />Your first paragraphs</span>
-                  <span><Swatch color="var(--chart-blue)" />Your latest paragraphs</span>
-                </>
-              }
-              table={
-                <table className="table-view">
-                  <thead><tr><th>Criterion</th><th>Then</th><th>Now</th></tr></thead>
-                  <tbody>
-                    {crit.rows.map((r) => (
-                      <tr key={r.id}><td>{r.label}</td><td>{r.then === null ? "–" : levelLabel(r.then)}</td><td>{r.now === null ? "–" : levelLabel(r.now)}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              }
-            >
-              <Dumbbell label="Effectiveness criteria, then and now" scale={levelScale} rows={crit.rows.map((r) => ({ label: r.label, then: toUnit(r.then), now: toUnit(r.now) }))} />
-              <span className="small">Levels are indicative: each comes from one short timed paragraph, judged against CEFR Companion Volume (2020) scales for written production and mediation.</span>
-            </ChartCard>
-          )}
-          {crit.rows.length > 0 && (
-            <section className="card flat">
-              <span className="eyebrow">What “effective” means here</span>
-              <span className="body" style={{ fontSize: 14 }}>
-                Feedback judges how well your paragraph does its job for its reader: answering the question, making each move count, connecting ideas, using and combining sources, and making claims as strong as the evidence. Language matters as far as it helps or blocks that.
-              </span>
-            </section>
-          )}
+  const areasCard = (variant: "hero" | "fold") => (
           <ChartCard
-            span={2}
+            variant={variant}
             title="Your five areas: then and now"
             subtitle="How often each area was shown well, in your first paragraphs and your latest ones"
             legend={
@@ -184,33 +111,93 @@ export default function ProgressPage() {
               ))}
             </div>
           </ChartCard>
+  );
 
-          <section className="stack g16">
-            <div className="card blue">
-              <span className="eyebrow blue">You do these well</span>
-              {sn.strengths.length === 0 && <span className="body" style={{ fontSize: 14 }}>Your strengths will appear here after a few paragraphs.</span>}
-              {sn.strengths.map((s) => (
-                <div key={s.label} className="stack g4">
-                  <strong style={{ fontSize: 14, color: "var(--blue-strong)" }}>{s.label} <span className="small">· {s.area}</span></strong>
-                  {s.quote && <span className="serif" style={{ fontStyle: "italic", fontSize: 15 }}>“{s.quote}”</span>}
-                </div>
-              ))}
+  return (
+    <AppShell>
+      <main className="container focus" style={{ maxWidth: 880 }}>
+        <div className="stack g6">
+          <p className="small">
+            {h.paragraphs} paragraph{h.paragraphs === 1 ? "" : "s"} · {h.words.toLocaleString("en-GB")} words · {h.streak}-day streak (best {Math.max(h.best, h.streak)})
+          </p>
+          <h1 className="h1">{recap?.headline ?? "How your writing is growing"}</h1>
+        </div>
+
+        {!recap?.thenNow && areasCard("hero")}
+        {recap?.thenNow && (
+          <section className="panel hero" aria-label="Then and now">
+            <div className="row between wrap g8">
+              <span className="eyebrow amber">Week {recap.weekNumber} · {recap.thenNow.focusLabel}: then and now</span>
+              <button className="text-btn" onClick={share}>{shared ? "Copied" : "Share"}</button>
             </div>
-            <div className="card amber">
-              <span className="eyebrow amber">Where to grow next</span>
-              {sn.next.length === 0 && <span className="body" style={{ fontSize: 14 }}>Nothing yet.</span>}
-              {sn.next.map((s) => (
-                <div key={s.label} className="stack g4">
-                  <strong style={{ fontSize: 14 }}>{s.label} <span className="small">· {s.area}</span></strong>
-                  <span className="body" style={{ fontSize: 13 }}>{s.comment}</span>
-                </div>
-              ))}
+            <div className="grid2">
+              <div className="stack g4">
+                <span className="small">Then</span>
+                <p className="bank-before" style={{ fontSize: 18 }}>“{recap.thenNow.then}”</p>
+              </div>
+              <div className="stack g4">
+                <span className="small" style={{ color: "var(--ink)", fontWeight: 600 }}>Now</span>
+                <p className="bank-after" style={{ fontSize: 19 }}>“{recap.thenNow.now}”</p>
+              </div>
             </div>
           </section>
+        )}
 
-          <ChartCard
-            span={2}
+        <section className="stack g12" aria-labelledby="well-h">
+          <h2 id="well-h" className="quiet-h">You do these well</h2>
+          {sn.strengths.length === 0 && <p className="body">Your strengths will appear here after a few paragraphs.</p>}
+          {sn.strengths.map((s) => (
+            <p key={s.label} className="body" style={{ fontSize: 16 }}>
+              <strong style={{ color: "var(--ink)" }}>{s.label}</strong> <span className="small">· {s.area}</span>
+              {s.quote && <span className="serif" style={{ fontStyle: "italic", display: "block", marginTop: 2 }}>“{s.quote}”</span>}
+            </p>
+          ))}
+        </section>
+
+        <section className="stack g12" aria-labelledby="next-h">
+          <h2 id="next-h" className="quiet-h">Where to grow next · current focus: {focus?.label}</h2>
+          {sn.next.length === 0 && <p className="body">Nothing yet.</p>}
+          {sn.next.map((s) => (
+            <p key={s.label} className="body" style={{ fontSize: 16 }}>
+              <strong style={{ color: "var(--ink)" }}>{s.label}</strong> <span className="small">· {s.area}</span>
+              <span style={{ display: "block", marginTop: 2 }}>{s.comment}</span>
+            </p>
+          ))}
+        </section>
+
+        <section className="stack" aria-labelledby="more-h">
+          <h2 id="more-h" className="quiet-h" style={{ marginBottom: 8 }}>More detail, when you want it</h2>
+          {crit.rows.length > 0 && (
+            <ChartCard variant="fold"
+              title="How effective your writing is: then and now"
+              subtitle="Indicative CEFR-aligned levels for each criterion, averaged over your first paragraphs and your latest ones. Effectiveness first; language last."
+              legend={
+                <>
+                  <span><Swatch color="var(--chart-blue-light)" />Your first paragraphs</span>
+                  <span><Swatch color="var(--chart-blue)" />Your latest paragraphs</span>
+                </>
+              }
+              table={
+                <table className="table-view">
+                  <thead><tr><th>Criterion</th><th>Then</th><th>Now</th></tr></thead>
+                  <tbody>
+                    {crit.rows.map((r) => (
+                      <tr key={r.id}><td>{r.label}</td><td>{r.then === null ? "–" : levelLabel(r.then)}</td><td>{r.now === null ? "–" : levelLabel(r.now)}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              }
+            >
+              <Dumbbell label="Effectiveness criteria, then and now" scale={levelScale} rows={crit.rows.map((r) => ({ label: r.label, then: toUnit(r.then), now: toUnit(r.now) }))} />
+              <span className="small">Levels are indicative: each comes from one short timed paragraph, judged against CEFR Companion Volume (2020) scales for written production and mediation.</span>
+            </ChartCard>
+          )}
+          {recap?.thenNow && areasCard("fold")}
+
+
+          <ChartCard variant="fold"
             title="Writing fluency"
+            aside={h.perFive ? `${h.perFive} words per 5 minutes` : undefined}
             subtitle="Words per five minutes of writing. More words in the same time means ideas come more easily."
             table={
               <table className="table-view">
@@ -226,7 +213,7 @@ export default function ProgressPage() {
             )}
           </ChartCard>
 
-          <ChartCard
+          <ChartCard variant="fold"
             title="Language snapshot"
             subtitle={lang.enough ? "Your first paragraphs compared with your latest" : "Needs four paragraphs"}
             table={
@@ -251,8 +238,7 @@ export default function ProgressPage() {
             )}
           </ChartCard>
 
-          <ChartCard
-            span={2}
+          <ChartCard variant="fold"
             title="Focus by focus"
             subtitle={`The ${grid.rows.length} focuses across your last ${grid.dates.length} paragraphs`}
             legend={
@@ -273,7 +259,7 @@ export default function ProgressPage() {
               </table>
             }
           >
-            <div className="stack g12">
+            <div className="stack g12" style={{ overflowX: "auto" }}>
               {ROW_IDS.map((row) => (
                 <div key={row} className="stack g4">
                   <span className="eyebrow">{ROWS[row].label}</span>
@@ -294,8 +280,7 @@ export default function ProgressPage() {
             </div>
           </ChartCard>
 
-          <section className="stack g16">
-            <ChartCard
+            <ChartCard variant="fold"
               title="Paragraph moves you use"
               subtitle={moves.planMatch !== null ? `You followed your plan in ${pct(moves.planMatch)} of sentences` : "From your marked paragraphs"}
               table={
@@ -310,10 +295,10 @@ export default function ProgressPage() {
                 <span className="small">Not tried yet: {moves.rows.filter((m) => m.count === 0).map((m) => m.label).join(", ")}</span>
               )}
             </ChartCard>
-          </section>
 
-          <ChartCard
+          <ChartCard variant="fold"
             title="Remembering what you fixed"
+            aside={`${h.banked} banked`}
             subtitle="Sentences fixed correctly from memory, by days since you last practised them"
             table={
               <table className="table-view">
@@ -333,7 +318,7 @@ export default function ProgressPage() {
             )}
           </ChartCard>
 
-          <ChartCard title="What you ask about" subtitle="Your feedback requests">
+          <ChartCard variant="fold" title="What you ask about" subtitle="Your feedback requests">
             {rc.asked.length ? (
               <HBars color="var(--chart-amber)" rows={rc.asked.slice(0, 6).map((r) => ({ label: r.label, value: r.count }))} />
             ) : (
@@ -341,9 +326,7 @@ export default function ProgressPage() {
             )}
           </ChartCard>
 
-          <section className="card" aria-label="Knowing your own writing">
-            <h2 className="h3">Knowing your own writing</h2>
-            <span className="small">When you name the sentence you’re least sure of, how often does your tutor pick the same one?</span>
+          <ChartCard variant="fold" title="Knowing your own writing" subtitle="When you name the sentence you’re least sure of, how often does your tutor pick the same one?">
             {rc.judged ? (
               <>
                 <span className="stat">{rc.matched} <span className="small" style={{ fontSize: 16 }}>of {rc.judged}</span></span>
@@ -356,19 +339,10 @@ export default function ProgressPage() {
             ) : (
               <span className="body" style={{ fontSize: 14 }}>Pick a sentence you’re unsure about after writing to start tracking this.</span>
             )}
-          </section>
-        </div>
+          </ChartCard>
+        </section>
       </main>
     </AppShell>
-  );
-}
-
-function Tile({ value, label }: { value: number | string; label: string }) {
-  return (
-    <div className="card tight">
-      <span className="stat" style={{ fontSize: 36 }}>{value}</span>
-      <span className="small">{label}</span>
-    </div>
   );
 }
 
