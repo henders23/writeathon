@@ -128,6 +128,12 @@ export default function ProfilePage() {
             </section>
 
             <section className="card">
+              <h2 className="h3">Your group</h2>
+              <p className="body" style={{ fontSize: 14 }}>See how your writing group is getting on this week.</p>
+              <Link href="/group" className="btn secondary small" style={{ alignSelf: "flex-start" }}>Open your group</Link>
+            </section>
+
+            <section className="card">
               <h2 className="h3">How feedback works</h2>
               <p className="body" style={{ fontSize: 14 }}>What you ask for, how notes appear in the margin, and how banked sentences come back.</p>
               <Link href="/how" className="btn secondary small" style={{ alignSelf: "flex-start" }}>See how feedback works</Link>

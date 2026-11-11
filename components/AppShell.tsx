@@ -2,31 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { currentStreak } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
 import DictionaryCapture from "./DictionaryCapture";
-import { Close, Flame } from "./Icons";
-import ThemeToggle from "./ThemeToggle";
 
 const NAV = [
-  { href: "/", label: "Today" },
-  { href: "/practice", label: "Practice" },
-  { href: "/progress", label: "Progress" },
-  { href: "/bank", label: "Bank" },
+  { href: "/", label: "Today", also: [] as string[] },
+  { href: "/practice", label: "Practice", also: ["/surgery", "/revise", "/own"] },
+  { href: "/progress", label: "Progress", also: ["/pattern"] },
+  { href: "/bank", label: "Library", also: ["/dictionary", "/review"] },
+];
+
+const LIBRARY = [
+  { href: "/bank", label: "Sentence bank" },
   { href: "/dictionary", label: "Dictionary" },
-  { href: "/group", label: "Group" },
 ];
 
 function initials(name: string) {
   return name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-/** The app frame for everyday pages: top bar with navigation. */
+/** The app frame for everyday pages: a short top bar, with one place to look below it. */
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const state = useAppState();
   const profile = state?.profile;
-  const streak = profile && state ? currentStreak(profile, state.sessions) : 0;
+  const inLibrary = LIBRARY.some((l) => path === l.href);
   return (
     <div className="app">
       <header className="topbar">
@@ -36,7 +36,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="nav" aria-label="Main">
           {NAV.map((n) => {
-            const active = n.href === "/" ? path === "/" : path.startsWith(n.href);
+            const active = n.href === "/" ? path === "/" : [n.href, ...n.also].some((h) => path.startsWith(h));
             return (
               <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined}>
                 {n.label}
@@ -46,28 +46,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="topbar-right">
           {profile && (
-            <span className="streak-chip">
-              <Flame size={18} color="var(--amber)" /> {streak}-day streak
-            </span>
-          )}
-          <ThemeToggle />
-          {profile && (
-            <Link href="/profile" className="round-btn avatar" aria-label="Your profile and settings">
+            <Link href="/profile" className="round-btn avatar" aria-label="Your profile, group and settings">
               {initials(profile.name)}
             </Link>
           )}
         </div>
       </header>
+      {inLibrary && (
+        <nav className="subnav" aria-label="Library">
+          {LIBRARY.map((l) => (
+            <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+      )}
       {children}
       <DictionaryCapture />
     </div>
   );
 }
 
-export const SESSION_STEPS = ["Plan", "Write", "Ask", "Feedback & rewrite"] as const;
+export const SESSION_STEPS = ["Plan", "Write", "Ask", "Feedback and rewrite"] as const;
 
-/** The focused frame for a writing session: steps instead of navigation. */
-export function SessionShell({ step, children, label }: { step: number; children: React.ReactNode; label?: string }) {
+/** The focused frame for a writing session: where you are in the four steps, and a way out. */
+export function SessionShell({ step, children }: { step: number; children: React.ReactNode; label?: string }) {
   return (
     <div className="app">
       <header className="topbar">
@@ -75,19 +78,19 @@ export function SessionShell({ step, children, label }: { step: number; children
           <span className="wordmark">Writeathon</span>
           <span className="byline">By Paul Hendrie</span>
         </Link>
-        <nav className="steps" aria-label="Session steps">
-          {SESSION_STEPS.map((s, i) => (
-            <span key={s} className={i < step ? "done" : i === step ? "now" : ""} aria-current={i === step ? "step" : undefined}>
-              {i < step ? "✓ " : ""}
-              {s}
-            </span>
-          ))}
-        </nav>
+        <div className="step-now" role="group" aria-label="Session progress">
+          <span>
+            Step {step + 1} of {SESSION_STEPS.length} · {SESSION_STEPS[step]}
+          </span>
+          <span className="step-bar" aria-hidden="true">
+            {SESSION_STEPS.map((s, i) => (
+              <span key={s} className={i <= step ? "on" : ""} />
+            ))}
+          </span>
+        </div>
         <div className="topbar-right">
-          {label && <span className="streak-chip">{label}</span>}
-          <ThemeToggle />
-          <Link href="/" className="round-btn" aria-label="Leave this session">
-            <Close />
+          <Link href="/" className="text-btn" style={{ padding: "12px 0" }}>
+            Leave
           </Link>
         </div>
       </header>

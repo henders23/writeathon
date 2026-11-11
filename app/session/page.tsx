@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { SessionShell } from "@/components/AppShell";
-import { Bulb, Check, Close, Eye } from "@/components/Icons";
+import { Check, Close, Eye } from "@/components/Icons";
 import LastAttempt from "@/components/LastAttempt";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
@@ -17,7 +17,6 @@ import {
   MOVES,
   MOVE_IDS,
   REQUESTS,
-  ROWS,
   TASKS,
   TASK_SHAPES,
   targetFor,
@@ -79,6 +78,7 @@ function SessionFlow() {
   const [pasteBlocked, setPasteBlocked] = useState(0);
   const [hints, setHints] = useState<number[]>([]);
   const [peek, setPeek] = useState(false);
+  const [editMoves, setEditMoves] = useState(false);
   const [requests, setRequests] = useState<string[]>([]);
   const [requestNote, setRequestNote] = useState("");
   const [unsure, setUnsure] = useState<number | null>(null);
@@ -104,7 +104,12 @@ function SessionFlow() {
       if (d.nSources) setNSources(d.nSources);
       if (d.stage === "write") setWriteStart(Date.now() - (d.writeSeconds ?? 0) * 1000);
       if (d.writeSeconds) setWriteSeconds(d.writeSeconds);
+    } else {
+      // Start from a suggested shape, so the plan is something to adjust rather than build from nothing.
+      setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], chosenSources(prompt, nSources).length).map((m) => ({ move: m, note: "" })));
     }
+    // nSources is read once, when the session opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt, mode, today]);
 
   useEffect(() => {
@@ -220,40 +225,17 @@ function SessionFlow() {
     router.push(mode === "hunt" ? `/hunt/results/${id}` : `/feedback/${id}`);
   }
 
-  const taskHeader = (
-    <header className="stack g10" style={{ textAlign: "center", alignItems: "center", maxWidth: 860, margin: "0 auto" }}>
-      <span className={`eyebrow${mode === "hunt" ? " amber" : ""}`}>
-        {label} · {prompt.topic}
-      </span>
-      <p className="prompt" style={{ fontSize: 28 }} data-dict="Writeathon task">{taskText}</p>
-      {synth && <p className="lead" style={{ maxWidth: 760 }} data-dict="Writeathon task">{synth}</p>}
-      <span className="small">
-        One paragraph · {target.min}–{target.max} words · {Math.round(target.seconds / 60)} minutes
-        {sources.length ? ` · ${sources.length} source${sources.length === 1 ? "" : "s"}` : " · no source: your own ideas"}
-      </span>
-    </header>
-  );
-
-  const sourcePicker = available.length > 0 && mode !== "hunt" && (
-    <section className="card" aria-labelledby="nsrc-h" style={{ maxWidth: 860, margin: "0 auto", width: "100%", flexDirection: "row", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-      <div className="stack g4 grow">
-        <h2 id="nsrc-h" className="h3">How many sources will you draw on?</h2>
-        <span className="small">
-          {available.length === 1
-            ? "This topic has one source. Topics marked ‘up to 3 sources’ on Today let you practise synthesis."
-            : "One source: respond to it. Two or three: synthesise them, showing how they agree, differ or build on each other. Each extra source adds about a minute."}
-        </span>
-      </div>
-      <div className="row g8" role="radiogroup" aria-labelledby="nsrc-h">
-        {[1, 2, 3].map((k) => (
+  const sourcePicker = available.length > 1 && mode !== "hunt" && (
+    <div className="row g8 wrap" role="radiogroup" aria-label="How many sources will you draw on?">
+      {available.slice(0, 3).map((_, i) => {
+        const k = i + 1;
+        return (
           <button
             key={k}
             role="radio"
             aria-checked={sources.length === k}
             className="chip"
             aria-pressed={sources.length === k}
-            disabled={k > available.length}
-            title={k > available.length ? "Not available for this topic" : undefined}
             onClick={() => {
               setNSources(k);
               if (k > 1 && outline.length && !outline.some((o) => o.move === "synthesise")) {
@@ -261,98 +243,104 @@ function SessionFlow() {
               }
             }}
           >
-            {k} source{k === 1 ? "" : "s"}
+            Use {k} source{k === 1 ? "" : "s"}
           </button>
-        ))}
-      </div>
-    </section>
-  );
-
-  const sourcePane = (
-    <aside className="stack g16" aria-label={sources.length > 1 ? "Your sources" : "Your source"}>
-      {sources.length ? (
-        <>
-          <h2 className="sources-h">
-            <span className="count" aria-hidden="true">{sources.length}</span>
-            {sources.length > 1 ? `Your ${sources.length} sources` : "Your source"}
-          </h2>
-          <p className="small">
-            {sources[0].own
-              ? "Your own extract. Read it closely before you plan."
-              : sources.length > 1
-                ? `Short extracts from real, open-access research. Use all ${sources.length} in your paragraph: read them first, and notice where they agree or differ.`
-                : `A short extract from real, open-access research${sources[0].journal ? ` in ${sources[0].journal}` : ""}. Read it first, then plan how you’ll use it.`}
-          </p>
-          {sources.map((s, i) => (
-            <SourceCard key={s.cite + i} source={s} label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
-          ))}
-        </>
-      ) : (
-        <div className="card flat">
-          <span className="eyebrow">No source today</span>
-          <p className="body" style={{ fontSize: 14 }}>Use your own ideas, knowledge and examples. There is nothing to cite.</p>
-        </div>
-      )}
-      {repeat && <LastAttempt session={repeat} />}
-    </aside>
+        );
+      })}
+    </div>
   );
 
   /* ---------- Plan ---------- */
   if (stage === "plan") {
+    const picking = editMoves || outline.length === 0;
+    const tip = outline.length ? checks.find((c) => !c.ok) : undefined;
     return (
-      <SessionShell step={0} label={label}>
-        <main className="stack g24" style={{ padding: "28px 0 40px" }}>
-          <div className="stack g16" style={{ padding: "0 32px" }}>
-            {taskHeader}
-            {sourcePicker}
-          </div>
-          <div className="desk" style={{ paddingTop: 0 }}>
-            {sourcePane}
+      <SessionShell step={0}>
+        <main className="session-main">
+          <header className="session-top stack g8">
+            <span className={`eyebrow${mode === "hunt" ? " amber" : ""}`}>
+              {label} · {prompt.topic}
+            </span>
+            <p className="prompt" style={{ maxWidth: 860 }} data-dict="Writeathon task">{taskText}</p>
+            {synth && <p className="body" style={{ maxWidth: 760 }} data-dict="Writeathon task">{synth}</p>}
+          </header>
 
-            <section className="panel stack g20" style={{ padding: 24 }} aria-labelledby="plan-h">
-              <div className="row between wrap g8">
-                <div className="stack g4">
-                  <h1 id="plan-h" className="h3" style={{ fontSize: 18 }}>Plan your paragraph’s moves</h1>
-                  <span className="small">What will each sentence do? Choose 3 to {maxMoves - (prompt.warmup ? 1 : 0)} moves in order. Add a few words for each if you like.</span>
-                </div>
-                <button className="btn secondary small" onClick={() => setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], sources.length).map((m) => ({ move: m, note: "" })))}>
-                  Suggest a shape
-                </button>
-              </div>
+          <aside className="stack g16" aria-label={sources.length > 1 ? "Your sources" : "Your source"}>
+            {sources.length ? (
+              <>
+                <h2 className="quiet-h">
+                  {sources[0].own ? "Read your extract first" : sources.length > 1 ? `Read your ${sources.length} sources first` : "Read the source first"}
+                </h2>
+                {sourcePicker}
+                {sources.map((s, i) => (
+                  <SourceCard key={s.cite + i} source={s} label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
+                ))}
+                {sources.length > 1 && <p className="small">Use all {sources.length} in your paragraph. Notice where they agree or differ.</p>}
+              </>
+            ) : (
+              <>
+                <h2 className="quiet-h">No source today</h2>
+                <p className="body">Use your own ideas, knowledge and examples. There is nothing to cite.</p>
+              </>
+            )}
+            {repeat && <LastAttempt session={repeat} />}
+          </aside>
 
-              {outline.length === 0 ? (
-                <div className="slot" style={{ minHeight: 64, justifyContent: "center" }}>Your outline is empty. Pick a move below to start.</div>
-              ) : (
-                <ol className="stack g8" style={{ margin: 0, padding: 0, listStyle: "none" }} aria-label="Your outline">
-                  {outline.map((o, i) => (
-                    <li key={i} className="move-row">
-                      <span className="move-num">{i + 1}</span>
-                      <div className="stack g4">
-                        <strong style={{ fontSize: 15 }}>{MOVES[o.move].label}</strong>
-                        <span className="small">{MOVES[o.move].does}</span>
-                      </div>
-                      <input
-                        className="input"
-                        style={{ minHeight: 40, fontSize: 15 }}
-                        aria-label={`Note for move ${i + 1}, ${MOVES[o.move].label}`}
-                        placeholder="A few words (optional)"
-                        value={o.note}
-                        onChange={(e) => setOutline((all) => all.map((x, k) => (k === i ? { ...x, note: e.target.value } : x)))}
-                      />
-                      <div className="row g4">
-                        <button className="round-btn" style={{ width: 32, height: 32 }} onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label={`Move ${MOVES[o.move].label} up`}>↑</button>
-                        <button className="round-btn" style={{ width: 32, height: 32 }} onClick={() => moveStep(i, 1)} disabled={i === outline.length - 1} aria-label={`Move ${MOVES[o.move].label} down`}>↓</button>
-                        <button className="round-btn" style={{ width: 32, height: 32 }} onClick={() => setOutline((all) => all.filter((_, k) => k !== i))} aria-label={`Remove ${MOVES[o.move].label}`}>
-                          <Close size={14} />
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
+          <section className="panel hero" aria-labelledby="plan-h">
+            <div className="stack g6">
+              <h1 id="plan-h" className="h2">What will each sentence do?</h1>
+              <span className="small" style={{ fontSize: 14 }}>
+                {outline.length
+                  ? "A suggested shape for this task. Add a few words to each move if you like."
+                  : "Your plan is empty. Choose moves below, or just start writing."}
+              </span>
+            </div>
 
+            {outline.length > 0 && (
+              <ol style={{ margin: 0, padding: 0, listStyle: "none" }} aria-label="Your outline">
+                {outline.map((o, i) => (
+                  <li key={i} className="plan-row">
+                    <span className="n" aria-hidden="true">{i + 1}</span>
+                    <div className="stack g4">
+                      <strong style={{ fontSize: 15 }}>{MOVES[o.move].label}</strong>
+                      <span className="small">{MOVES[o.move].does}</span>
+                    </div>
+                    <input
+                      aria-label={`Note for move ${i + 1}, ${MOVES[o.move].label}`}
+                      placeholder="A few words (optional)"
+                      value={o.note}
+                      onChange={(e) => setOutline((all) => all.map((x, k) => (k === i ? { ...x, note: e.target.value } : x)))}
+                    />
+                    <div className="row g4">
+                      {editMoves && (
+                        <>
+                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label={`Move ${MOVES[o.move].label} up`}>↑</button>
+                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, 1)} disabled={i === outline.length - 1} aria-label={`Move ${MOVES[o.move].label} down`}>↓</button>
+                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => setOutline((all) => all.filter((_, k) => k !== i))} aria-label={`Remove ${MOVES[o.move].label}`}>
+                            <Close size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+
+            {outline.length > 0 && (
+              <button className="text-btn" style={{ alignSelf: "flex-start", fontSize: 15, fontWeight: 600, minHeight: 44 }} aria-expanded={editMoves} onClick={() => setEditMoves((v) => !v)}>
+                {editMoves ? "Done changing the moves" : "Change the moves"}
+              </button>
+            )}
+
+            {picking && (
               <div className="stack g12">
-                <span className="label">Add a move{outline.length >= maxMoves ? " (outline full)" : ""}</span>
+                <div className="row between wrap g8">
+                  <span className="label">Add a move{outline.length >= maxMoves ? " (outline full)" : ""}</span>
+                  <button className="text-btn" onClick={() => setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], sources.length).map((m) => ({ move: m, note: "" })))}>
+                    Back to the suggested shape
+                  </button>
+                </div>
                 <div className="grid4" style={{ gap: 12 }}>
                   {GROUPS.map((g) => (
                     <div key={g} className="stack g6">
@@ -367,40 +355,21 @@ function SessionFlow() {
                   ))}
                 </div>
               </div>
-            </section>
+            )}
 
-            <aside className="stack g16 desk-right" aria-label="Suggestions for your plan">
-              <section className="card" aria-live="polite">
-                <span className="eyebrow">Suggestions for your plan</span>
-                {outline.length === 0 ? (
-                  <p className="body" style={{ fontSize: 14 }}>Add moves and you’ll see suggestions based on the task.</p>
-                ) : (
-                  <ul className="outline-list">
-                    {checks.map((c) => (
-                      <li key={c.text}>
-                        <span className={`mark ${c.ok ? "done" : "todo"}`} aria-hidden="true">{c.ok ? <Check size={12} /> : <Bulb size={13} />}</span>
-                        <span className="body" style={{ fontSize: 14 }}>
-                          <span className="sr-only">{c.ok ? "Working well: " : "Suggestion: "}</span>
-                          {c.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-              <section className="card amber">
-                <span className="eyebrow amber">Today’s focus · {ROWS[focus.row].label}</span>
-                <strong>{focus.label}</strong>
-                <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>{focus.why}</p>
-              </section>
-              <button className="btn block" onClick={() => go("write")}>
+            <div aria-live="polite">
+              {tip && <p className="hint-line">Suggestion: {tip.text}</p>}
+            </div>
+
+            <div className="row g20 wrap">
+              <button className="btn big" onClick={() => go("write")}>
                 Start writing · {Math.round(target.seconds / 60)} minutes
               </button>
-              <span className="small" style={{ textAlign: "center" }}>
-                {outline.length === 0 ? "Planning is optional, but it usually helps." : "Suggestions only: your plan is your choice."}
+              <span className="small" style={{ fontSize: 14 }}>
+                {target.min}–{target.max} words · today’s focus: {focus.label.charAt(0).toLowerCase() + focus.label.slice(1)}
               </span>
-            </aside>
-          </div>
+            </div>
+          </section>
         </main>
       </SessionShell>
     );
@@ -415,123 +384,31 @@ function SessionFlow() {
     const signal = focusSignal(focusId, text, prompt);
     // Sentence i is taken to carry move i; the student's current sentence is the last one.
     const writing = Math.max(0, sentences.length - (/[.!?]["”’)]*\s*$/.test(text.trim()) ? 0 : 1));
+    const nowMove = outline[writing];
+    const nextMove = outline[writing + 1];
+    const uncited = sources.filter((s) => !isCited(text, s));
+    const citeNote = !sources.length
+      ? ""
+      : uncited.length
+        ? ` · not cited yet: ${uncited.map((s) => s.cite).join(", ")}`
+        : sources.length > 1
+          ? " · all sources cited"
+          : " · source cited";
     return (
-      <SessionShell step={1} label={label}>
-        <div className="desk">
-          <aside className="stack g16" aria-label="Task and source">
-            <section className="card">
-              <span className="eyebrow">The task</span>
-              <p className="body" style={{ fontSize: 15, color: "var(--ink)" }} data-dict="Writeathon task">{taskText}</p>
-              {synth && <p className="body" style={{ fontSize: 14 }}>{synth}</p>}
-            </section>
-            {sources.length > 0 && (
-              <h2 className="sources-h" style={{ fontSize: 22 }}>
-                <span className="count" aria-hidden="true">{sources.length}</span>
-                {sources.length > 1 ? `Use your ${sources.length} sources` : "Use your source"}
-              </h2>
-            )}
+      <SessionShell step={1}>
+        <div className="session-main">
+          <aside className="stack g20" aria-label="Task and source">
+            <div className="stack g6">
+              <h2 className="quiet-h">The task</h2>
+              <p className="body" style={{ color: "var(--ink-2)" }} data-dict="Writeathon task">{taskText}</p>
+              {synth && <p className="small" style={{ fontSize: 14 }}>{synth}</p>}
+            </div>
             {sources.map((s, i) => (
               <SourceCard key={s.cite + i} source={s} compact label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
             ))}
-          </aside>
-
-          <section className="panel stack" style={{ minHeight: "calc(100dvh - 140px)", overflow: "hidden" }} aria-label="Your paragraph">
-            <div className="row between" style={{ padding: "16px 24px", borderBottom: "1px solid var(--line)" }}>
-              <span className={`timer${over ? " over" : ""}`} role="timer" aria-label={over ? "Time is up" : `${clock(left)} left`}>
-                {over ? `+${clock(-left)}` : clock(left)}
-              </span>
-              <span className="small" aria-live="polite">
-                {words} word{words === 1 ? "" : "s"} · aim for {target.min}–{target.max}
-              </span>
-            </div>
-            <div className="meter" aria-hidden="true" style={{ borderRadius: 0 }}>
-              <span style={{ width: `${pct}%`, background: words >= target.min ? "var(--chart-blue)" : "var(--chart-amber)" }} />
-            </div>
-            {over && <div className="notice" role="status" style={{ margin: "16px 24px 0" }}>Time’s up. Finish your sentence, then continue.</div>}
-            <label htmlFor="editor" className="sr-only">Your paragraph</label>
-            <textarea
-              id="editor"
-              className="editor"
-              value={text}
-              autoFocus
-              spellCheck={false}
-              autoCorrect="off"
-              autoCapitalize="sentences"
-              placeholder={outline[0] ? `Start with your ${MOVES[outline[0].move].label.toLowerCase()}…` : "Start with your main point…"}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Backspace" || e.key === "Delete") setDeletions((d) => d + 1);
-              }}
-              onPaste={(e) => {
-                e.preventDefault();
-                setPasteBlocked((p) => p + 1);
-              }}
-              onDrop={(e) => e.preventDefault()}
-            />
-            <div className="stack g10" style={{ padding: "0 24px 20px" }}>
-              {pasteBlocked > 0 && <div className="notice">Pasting is switched off. This is practice, so the words need to be yours.</div>}
-              {copiedLong && (
-                <div className="notice">
-                  You’ve copied “{copiedLong}” word for word from the source. Put it in your own words, or use quotation marks.
-                </div>
-              )}
-              <div className="row between">
-                <button className="text-btn" onClick={() => go("plan")}>← Back to plan</button>
-                <button className="btn" disabled={words < 20} onClick={() => go("ask")}>
-                  {words < 20 ? "Write at least 20 words" : "I’ve finished"}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <aside className="stack g16 desk-right" aria-label="Writing coach">
-            {sources.length > 0 && (
-              <section className="card" aria-live="polite">
-                <span className="eyebrow">{sources.length > 1 ? "Sources cited" : "Source cited"}</span>
-                {sources.map((s, i) => {
-                  const c = isCited(text, s);
-                  return (
-                    <span key={i} className="row g8 body" style={{ fontSize: 14, color: c ? "var(--ink)" : "var(--muted)" }}>
-                      <span className={`mark ${c ? "done" : "todo"}`} aria-hidden="true" style={{ width: 20, height: 20 }}>{c ? <Check size={11} /> : ""}</span>
-                      {s.cite}
-                      <span className="sr-only">{c ? " cited" : " not cited yet"}</span>
-                    </span>
-                  );
-                })}
-                {sources.length > 1 && sources.every((s) => isCited(text, s)) && (
-                  <span className="small">All cited. Now check you’ve shown how they relate, not just what each says.</span>
-                )}
-              </section>
-            )}
-            {outline.length > 0 && (
-              <section className="card">
-                <span className="eyebrow">Your outline</span>
-                <ol className="outline-list">
-                  {outline.map((o, i) => {
-                    const status = i < writing ? "done" : i === writing ? "now" : "todo";
-                    return (
-                      <li key={i}>
-                        <span className={`mark ${status}`} aria-hidden="true">{status === "done" ? <Check size={12} /> : i + 1}</span>
-                        <div className="stack g4">
-                          <strong style={{ fontSize: 14, color: status === "todo" ? "var(--muted)" : "var(--ink)" }}>
-                            {MOVES[o.move].label}
-                            <span className="sr-only"> ({status === "done" ? "written" : status === "now" ? "writing now" : "to come"})</span>
-                          </strong>
-                          {o.note && <span className="small">{o.note}</span>}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-                {sentences.length > outline.length + 1 && (
-                  <span className="small">You’ve written more sentences than you planned. That’s fine if each one does a job.</span>
-                )}
-              </section>
-            )}
-
-            {mode === "hunt" && huntItems ? (
-              <section className="card amber" aria-label="Phrase Hunt targets">
-                <span className="eyebrow amber">Five to find</span>
+            {mode === "hunt" && huntItems && (
+              <section className="stack g8" aria-label="Phrase Hunt targets">
+                <h2 className="quiet-h">Five to find</h2>
                 {huntItems.map((h, i) => {
                   const found = findPhrase(text, h.phrase);
                   const hinted = hints.includes(i);
@@ -548,25 +425,86 @@ function SessionFlow() {
                   );
                 })}
               </section>
-            ) : (
-              <section className="card amber" aria-live="polite">
-                <span className="eyebrow amber">Focus · {focus.label}</span>
-                <p className="body" style={{ fontSize: 14, color: "var(--ink-2)" }}>
-                  {signal.good && <Check size={12} color="var(--blue)" />} {signal.message}
-                </p>
-                <button className="text-btn row g6" style={{ fontSize: 13, color: "var(--amber-deep)" }} onClick={() => setPeek((v) => !v)} aria-expanded={peek}>
-                  <Eye size={14} color="var(--amber-deep)" /> {peek ? "Hide" : "Show"} useful phrases
-                </button>
-                {peek && (
-                  <div className="stack g4">
-                    {focus.phrases.map((p) => (
-                      <span key={p} className="serif" style={{ fontStyle: "italic", fontSize: 16 }}>{p}</span>
-                    ))}
-                  </div>
-                )}
-              </section>
             )}
+            <button className="text-btn" style={{ alignSelf: "flex-start", minHeight: 44 }} onClick={() => go("plan")}>← Back to plan</button>
           </aside>
+
+          <section className="panel stack" style={{ minHeight: "calc(100dvh - 160px)", overflow: "hidden" }} aria-label="Your paragraph">
+            <div className="row between wrap g8" style={{ padding: "20px 32px 0" }}>
+              <p className="body" aria-live="polite">
+                {outline.length === 0 ? (
+                  "Your paragraph"
+                ) : nowMove ? (
+                  <>
+                    Now: <strong style={{ color: "var(--ink)" }}>{writing + 1} · {MOVES[nowMove.move].label}</strong>
+                    {nowMove.note ? ` (${nowMove.note})` : ""}
+                    <span style={{ color: "var(--muted)" }}>{nextMove ? ` · then ${MOVES[nextMove.move].label}` : " · your last move"}</span>
+                  </>
+                ) : (
+                  "You’ve written every move you planned."
+                )}
+              </p>
+              <span className={`timer${over ? " over" : ""}`} style={{ fontSize: 22 }} role="timer" aria-label={over ? "Time is up" : `${clock(left)} left`}>
+                {over ? `+${clock(-left)}` : clock(left)}
+              </span>
+            </div>
+            {over && <div className="notice" role="status" style={{ margin: "16px 32px 0" }}>Time’s up. Finish your sentence, then continue.</div>}
+            <label htmlFor="editor" className="sr-only">Your paragraph</label>
+            <textarea
+              id="editor"
+              className="editor"
+              style={{ padding: "24px 32px" }}
+              value={text}
+              autoFocus
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="sentences"
+              placeholder={outline[0] ? `Start with your ${MOVES[outline[0].move].label.toLowerCase()}…` : "Start with your main point…"}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Backspace" || e.key === "Delete") setDeletions((d) => d + 1);
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                setPasteBlocked((p) => p + 1);
+              }}
+              onDrop={(e) => e.preventDefault()}
+            />
+            <div className="stack g16" style={{ padding: "0 32px 28px" }}>
+              {pasteBlocked > 0 && <div className="notice">Pasting is switched off. This is practice, so the words need to be yours.</div>}
+              {copiedLong && (
+                <div className="notice">
+                  You’ve copied “{copiedLong}” word for word from the source. Put it in your own words, or use quotation marks.
+                </div>
+              )}
+              {mode !== "hunt" && (
+                <div className="hint-line stack g6" aria-live="polite">
+                  <span>
+                    <strong>{focus.label}:</strong> {signal.message}{" "}
+                    <button className="text-btn" style={{ fontSize: 14, color: "var(--amber-deep)" }} onClick={() => setPeek((v) => !v)} aria-expanded={peek}>
+                      <Eye size={14} color="var(--amber-deep)" /> {peek ? "Hide" : "Show"} useful phrases
+                    </button>
+                  </span>
+                  {peek && focus.phrases.map((p) => (
+                    <span key={p} className="serif" style={{ fontStyle: "italic", fontSize: 16 }}>{p}</span>
+                  ))}
+                </div>
+              )}
+              <div className="row between wrap g16">
+                <div className="stack g6" style={{ flex: "1 1 240px", maxWidth: 420 }}>
+                  <span className="small" style={{ fontSize: 14 }} aria-live="polite">
+                    {words} word{words === 1 ? "" : "s"} · aim for {target.min}–{target.max}{citeNote}
+                  </span>
+                  <div className="meter" aria-hidden="true" style={{ height: 4 }}>
+                    <span style={{ width: `${pct}%`, background: "var(--chart-blue)" }} />
+                  </div>
+                </div>
+                <button className="btn big" disabled={words < 20} onClick={() => go("ask")}>
+                  {words < 20 ? "Write at least 20 words" : "I’ve finished"}
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
       </SessionShell>
     );
@@ -575,7 +513,7 @@ function SessionFlow() {
   /* ---------- Ask ---------- */
   const options = REQUESTS.filter((r) => (!r.needsSource || sources.length > 0) && (!r.needsSources || sources.length >= r.needsSources));
   return (
-    <SessionShell step={2} label={label}>
+    <SessionShell step={2}>
       <main className="container mid">
         <div className="stack g8">
           <h1 className="h1">What would you like feedback on?</h1>
@@ -632,7 +570,7 @@ function SessionFlow() {
 
         <div className="row between">
           <button className="text-btn" onClick={() => go("write")}>← Back to my paragraph</button>
-          <button className="btn" onClick={submit}>Get my feedback</button>
+          <button className="btn big" onClick={submit}>Get my feedback</button>
         </div>
       </main>
     </SessionShell>

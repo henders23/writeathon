@@ -101,7 +101,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
   return (
     <div className="stack g12">
       <div className="field">
-        <label htmlFor="rewrite" style={{ color: "var(--amber-deep)" }}>Rewrite it: edit your sentence</label>
+        <label htmlFor="rewrite">Your rewrite: edit the sentence</label>
         <textarea
           id="rewrite"
           rows={4}
@@ -124,7 +124,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
 
       {!banked && !result?.ok && (
         <div className="stack g8">
-          <button className="btn amber" onClick={check} disabled={checking || unchanged || !attempt.trim()}>
+          <button className="btn" style={{ alignSelf: "flex-start" }} onClick={check} disabled={checking || unchanged || !attempt.trim()}>
             {checking ? "Checking…" : unchanged ? "Change your sentence, then check it" : result ? "Check again" : "Check my rewrite"}
           </button>
           {level < HINTS.length && (
@@ -160,7 +160,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
             />
           </div>
           {!transferResult?.ok && (
-            <button className="btn amber" onClick={checkTransfer} disabled={checking || transfer.trim().split(/\s+/).length < 5}>
+            <button className="btn" style={{ alignSelf: "flex-start" }} onClick={checkTransfer} disabled={checking || transfer.trim().split(/\s+/).length < 5}>
               {checking ? "Checking…" : transferResult ? "Check again" : "Check my new sentence"}
             </button>
           )}
@@ -175,7 +175,7 @@ export default function RewriteIt({ session, workOn }: { session: Session; workO
       {error && <div className="error" role="alert">{error}</div>}
 
       {canBank && !banked && (
-        <button className="btn" onClick={bank}>
+        <button className="btn" style={{ alignSelf: "flex-start" }} onClick={bank}>
           <Bookmark color="var(--on-ink)" size={18} /> Bank this sentence
         </button>
       )}
