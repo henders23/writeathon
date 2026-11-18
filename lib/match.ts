@@ -69,3 +69,46 @@ export function splitSentences(text: string): string[] {
   }
   return out.map((x) => x.trim()).filter(Boolean);
 }
+
+/* ---------- Checking quotes from the feedback against the paragraph ---------- */
+
+const flatten = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").toLowerCase();
+
+/**
+ * Find a quote in the student's text and return it exactly as the student wrote it, or null if it
+ * is not there. Tolerates differences in case, spacing, curly quotes and wrapping quotation marks.
+ */
+export function locate(text: string, quote: string): string | null {
+  let q = (quote ?? "").trim();
+  if (!q) return null;
+  if (text.includes(q)) return q;
+  const flat = text.replace(/\s+/g, " ");
+  // Same length as `flat`, so indexes line up.
+  const hay = flatten(flat);
+  for (let pass = 0; pass < 2; pass++) {
+    const needle = flatten(q);
+    const at = needle.length >= 2 ? hay.indexOf(needle) : -1;
+    if (at >= 0) return flat.slice(at, at + needle.length);
+    q = q.replace(/^["“”'‘’…. ]+|["“”'‘’… ]+$/g, "");
+  }
+  return null;
+}
+
+/** The sentence of the paragraph that shares most words with a quote that could not be found exactly. */
+export function closestSentence(text: string, quote: string): string | null {
+  const words = new Set(normalise(quote).split(" ").filter(Boolean));
+  if (words.size < 3) return null;
+  let best: string | null = null;
+  let bestScore = 0;
+  for (const sent of splitSentences(text)) {
+    const w = normalise(sent).split(" ").filter(Boolean);
+    if (!w.length) continue;
+    const shared = w.filter((x) => words.has(x)).length;
+    const score = (2 * shared) / (w.length + words.size);
+    if (score > bestScore) {
+      bestScore = score;
+      best = sent;
+    }
+  }
+  return bestScore >= 0.6 ? best : null;
+}

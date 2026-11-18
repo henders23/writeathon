@@ -3,6 +3,7 @@ import { FOCUS_BY_ID, MOVES, REQUEST_LABEL, ROW_IDS, TASKS, type HuntItem, type 
 import { DISCIPLINE_LABEL } from "@/lib/disciplines";
 import { FEEDBACK_INSTRUCTIONS, FEEDBACK_SCHEMA } from "@/lib/instructions";
 import { guard, jsonError, structured } from "@/lib/server";
+import { closestSentence, locate } from "@/lib/match";
 import type { Feedback, OutlineStep, Plan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -59,11 +60,13 @@ export async function POST(req: Request) {
     sources.length
       ? `NUMBER OF SOURCES THE STUDENT CHOSE TO USE: ${sources.length}${sources.length > 1 ? " (synthesis is assessed)" : " (synthesis is n/a)"}\n${sources.map(srcLine).join("\n")}`
       : "SOURCES: none today (sources and synthesis are n/a)",
-    `TODAY'S FOCUS: ${focus.id} (${focus.label}, area: ${focus.row})`,
+    `TODAY'S FOCUS (a tie-breaker only): ${focus.id} (${focus.label}, area: ${focus.row})`,
     outline.length
       ? `STUDENT'S OUTLINE: ${outline.map((o, i) => `${i + 1}. ${MOVES[o.move as MoveId]?.label ?? o.move}${o.note ? ` (${o.note.slice(0, 80)})` : ""}`).join("; ")}`
       : "",
-    requests.length || note ? `STUDENT ASKED ABOUT: ${[...requests, ...(note ? [`"${note}"`] : [])].join("; ")}` : "STUDENT ASKED ABOUT: nothing specific",
+    requests.length || note
+      ? `STUDENT ASKED ABOUT (answer each in requestAnswers; request = the text exactly as given here): ${[...requests, ...(note ? [`"${note}"`] : [])].join("; ")}`
+      : "STUDENT ASKED ABOUT: nothing specific",
     b.unsure ? `SENTENCE THE STUDENT WAS LEAST SURE ABOUT: "${b.unsure.slice(0, 400)}"` : "",
     hunt.length ? `PHRASE HUNT ITEMS (in order):\n${hunt.map((h, i) => `${i + 1}. ${h.phrase}`).join("\n")}` : "",
     bank.length ? `RECENTLY BANKED PATTERNS:\n${bank.map((x) => `- ${x.label}: "${x.example}"`).join("\n")}` : "RECENTLY BANKED PATTERNS: none",
@@ -85,15 +88,39 @@ export async function POST(req: Request) {
     });
     // Normalise defensively so the app can rely on the shape.
     for (const r of ROW_IDS) if (!fb.rowEvidence?.[r]) fb.rowEvidence = { ...fb.rowEvidence, [r]: "N" };
-    fb.strengths = (fb.strengths ?? []).slice(0, 2);
     fb.hunt = hunt.length ? hunt.map((h, i) => fb.hunt?.[i] ?? { item: h.phrase, verdict: "missed", quote: "", note: "" }) : [];
     const labels = new Set(bank.map((x) => x.label));
-    fb.transfer = (fb.transfer ?? []).filter((t) => labels.has(t.label));
-    fb.sentences = (fb.sentences ?? []).filter((x) => x.text?.trim());
     fb.requestAnswers = fb.requestAnswers ?? [];
-    fb.effectiveness = (fb.effectiveness ?? []).map((c) =>
-      (c.criterion === "synthesis" && sources.length < 2) || (c.criterion === "sources" && !sources.length) ? { ...c, band: "n/a" as const } : c,
-    );
+    fb.focusEvidence = fb.focusEvidence ?? [];
+    fb.focusPhrasesUsed = fb.focusPhrasesUsed ?? [];
+
+    // Every quote is shown highlighted in the student's own paragraph, so it has to be there.
+    // Repair small differences (quote marks, spacing) and drop anything that cannot be found.
+    fb.strengths = (fb.strengths ?? [])
+      .map((x) => ({ ...x, quote: locate(text, x.quote) ?? "" }))
+      .filter((x) => x.quote)
+      .slice(0, 2);
+    if (fb.workOn) {
+      const said = locate(text, fb.workOn.said) ?? closestSentence(text, fb.workOn.said);
+      fb.workOn = said ? { ...fb.workOn, said } : null;
+    }
+    if (fb.language) {
+      const quotes = (fb.language.quotes ?? []).map((q) => locate(text, q)).filter((q): q is string => Boolean(q)).slice(0, 3);
+      fb.language = quotes.length ? { ...fb.language, quotes, more: Math.max(0, Math.min(9, Math.round(fb.language.more ?? 0))) } : null;
+    }
+    fb.transfer = (fb.transfer ?? [])
+      .filter((t) => labels.has(t.label))
+      .map((t) => ({ ...t, quote: locate(text, t.quote) ?? "" }))
+      .filter((t) => t.quote);
+    fb.focusQuote = locate(text, fb.focusQuote ?? "") ?? "";
+    // The app splits the paragraph itself if the model's split does not add up to the paragraph.
+    const sents = (fb.sentences ?? []).map((x) => ({ ...x, text: locate(text, x.text) ?? "" }));
+    fb.sentences = sents.length && sents.every((x) => x.text) ? sents : [];
+    fb.effectiveness = (fb.effectiveness ?? []).map((c) => {
+      const na = (c.criterion === "synthesis" && sources.length < 2) || (c.criterion === "sources" && !sources.length);
+      return { ...c, band: na ? ("n/a" as const) : c.band, quote: locate(text, c.quote ?? "") ?? "" };
+    });
+    if (fb.carryForward && !fb.carryForward.strategy?.trim()) fb.carryForward = undefined;
     return Response.json(fb);
   } catch (e) {
     console.error("feedback failed", e);

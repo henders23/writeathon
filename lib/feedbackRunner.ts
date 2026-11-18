@@ -79,7 +79,7 @@ export function requestRevision(sessionId: string): Promise<void> {
         promptText: s.promptText,
         original: orig.text,
         revised: s.text,
-        earlierFeedback: orig.feedback ? [orig.feedback.summary, orig.feedback.workOn ? `To work on: ${orig.feedback.workOn.label}. ${orig.feedback.workOn.comment}` : ""].join(" ") : "",
+        earlierFeedback: orig.feedback ? [orig.feedback.reading ?? orig.feedback.summary ?? "", orig.feedback.workOn ? `To work on: ${orig.feedback.workOn.label}. ${orig.feedback.workOn.comment}` : ""].join(" ") : "",
       });
       update((st2) => ({ ...st2, sessions: st2.sessions.map((x) => (x.id === sessionId ? { ...x, revision: out, revisionError: undefined } : x)) }));
     } catch (e) {

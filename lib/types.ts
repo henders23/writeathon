@@ -9,11 +9,16 @@ export type WorkOn = {
   focusId: string;
   label: string;
   said: string; // the exact sentence from the paragraph
-  clue: string; // hint 1: names the problem without the answer
+  comment: string; // what happens for the reader at this point
+  convention?: string; // the expectation behind the comment, and why it exists
+  clue: string; // hint 1: points to the change without the answer
   pattern: string; // hint 2: the pattern on a different topic
   try: string; // hint 3: a model rewrite of their sentence
-  comment: string;
 };
+/** At most one language pattern per paragraph: rule-governed slips are marked for the student to fix; word-level facts are given. */
+export type LanguageFocus = { label: string; kind: "rule" | "word"; quotes: string[]; note: string; more: number; notMarked: string };
+/** One approach-level routine to use in the next paragraph. */
+export type CarryForward = { strategy: string; focusId: string };
 export type HuntVerdict = "natural" | "close" | "missed";
 export type HuntResult = { item: string; verdict: HuntVerdict; quote: string; note: string };
 export type Transfer = { label: string; quote: string };
@@ -23,34 +28,38 @@ export type SentenceNote = {
   text: string;
   move: MoveId;
   kind: "strength" | "work" | "none";
-  /** How well the sentence does its job (its move) for the reader. */
+  /** Older feedback also rated and annotated every sentence. */
   effect?: "strong" | "partial" | "weak";
-  note: string;
+  note?: string;
 };
 
 /** One criterion in the effectiveness profile, with an indicative CEFR level. */
 export type CriterionResult = { criterion: CriterionId; band: Band; comment: string; quote: string };
 
 export type Feedback = {
-  summary: string;
+  /** "I read your paragraph as…": what reached the reader. */
+  reading?: string;
+  /** Older feedback opened with a one-line summary instead of a reading. */
+  summary?: string;
+  requestAnswers?: { request: string; answer: string }[];
   strengths: Strength[];
   workOn: WorkOn | null;
+  language?: LanguageFocus | null;
+  carryForward?: CarryForward;
+  sentences?: SentenceNote[];
+  effectiveness?: CriterionResult[];
+  modelParagraph?: string;
+  transfer: Transfer[];
+  hunt: HuntResult[];
+  // For the app's records (the dashboard and focus selection).
   rowEvidence: Record<RowId, Evidence>;
   focusEvidence: { focusId: string; result: "S" | "G" }[];
-  focusUsedCount: number;
   focusPhrasesUsed: string[];
   focusQuote: string;
   nextFocusSuggestion: string;
-  hunt: HuntResult[];
-  transfer: Transfer[];
-  sentences?: SentenceNote[];
-  requestAnswers?: { request: string; answer: string }[];
-  modelParagraph?: string;
-  /** How well the paragraph works for its reader, in a sentence or two. */
+  /** Older feedback only. */
   readerEffect?: string;
-  /** Comment on the sequence of moves as a whole. */
   movesComment?: string;
-  effectiveness?: CriterionResult[];
 };
 
 export type Plan = { claim: string; support: string; soWhat: string };

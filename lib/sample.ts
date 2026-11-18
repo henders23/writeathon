@@ -160,22 +160,6 @@ const PARAS: Para[] = [
   },
 ];
 
-const MOVE_NOTE: Record<MoveId, string> = {
-  claim: "States your main point.",
-  define: "Defines a key term.",
-  context: "Gives the reader background.",
-  summarise: "Sums up the source’s point.",
-  explain: "Explains how or why.",
-  example: "Gives a concrete case.",
-  evidence: "Uses the source as support.",
-  data: "Reports a key figure.",
-  synthesise: "Shows how the sources relate.",
-  concede: "Admits a limit to your view.",
-  counter: "Answers the other view.",
-  sowhat: "Says why it matters.",
-  recommend: "Says what the reader should do.",
-};
-
 const REQUEST_SETS = [["view", "source"], ["linking", "grammar"], ["ending", "words"], ["citing", "register"], ["support", "sentences"], ["topic"]];
 const ANSWERS: Record<string, string> = {
   view: "Your view is clear from your first sentence, and every sentence after it supports that view.",
@@ -208,6 +192,17 @@ function replay(start: string, results: boolean[], today: string) {
   return { reviews, step, due };
 }
 
+const CONVENTION = {
+  topic: "In a short academic paragraph, readers expect the first sentence to give your answer, because they read everything after it as support for that answer.",
+  hedge: "In academic writing a claim should be only as strong as its evidence. One study can suggest or indicate something; it cannot prove it, so readers distrust words like ‘only’ and ‘always’.",
+  extra: "Academic readers expect a formal, exact sentence. Small slips here make them slow down and reread, which takes attention away from your point.",
+};
+const CARRY = {
+  topic: "Before you write, put your answer to the question in one sentence. Make that your first sentence.",
+  hedge: "After each claim that rests on a source, ask: how sure can one study make me? Then choose ‘may’, ‘tends to’ or ‘suggests’ to match.",
+  extra: "Keep the last 30 seconds to reread for one thing only: the small words and the register of each sentence.",
+};
+
 const BAND_STEPS: Band[] = ["B1", "B1+", "B2", "B2+", "C1"];
 /** An effectiveness profile that develops over the sample weeks. */
 function sampleBands(i: number, n: number, topicPhase: boolean, hedgingGood: boolean, texts: string[]): CriterionResult[] {
@@ -237,6 +232,7 @@ export function loadSampleHistory() {
     const topicPhase = i < 6;
     const hedgingGood = i >= days.length - 2;
     const focusId = topicPhase ? "topic-sentence" : "hedging";
+    const phase = topicPhase ? "topic" : hedgingGood ? "extra" : "hedge";
 
     // Build the paragraph: weak opener while learning topic sentences, overclaim until hedging is secure.
     const texts = [...p.sentences];
@@ -272,8 +268,6 @@ export function loadSampleHistory() {
       text: t,
       move: p.moves[k],
       kind: k === workIdx ? "work" : strengthAt.has(k) ? "strength" : "none",
-      effect: k === workIdx ? (topicPhase ? "weak" : "partial") : strengthAt.has(k) ? "strong" : i > 10 ? "strong" : "partial",
-      note: k === workIdx ? workOn.comment : strengthAt.get(k)?.comment ?? MOVE_NOTE[p.moves[k]],
     }));
 
     const rowEvidence = Object.fromEntries(ROW_IDS.map((r) => [r, EV[r][i] as Evidence])) as Record<RowId, Evidence>;
@@ -291,16 +285,13 @@ export function loadSampleHistory() {
     const id = newId();
 
     const feedback: Feedback = {
-      summary: hedgingGood
-        ? "A confident, well-qualified paragraph: your claims now match your evidence."
-        : topicPhase
-          ? "A good paragraph with clear support. The opening needs to answer the question."
-          : "Clear and well organised. One claim goes further than the evidence allows.",
-      strengths: strengthPairs.map(([, s]) => s),
-      workOn,
+      reading: `I read your paragraph as arguing that ${p.sentences[0][0].toLowerCase()}${p.sentences[0].slice(1)}`,
+      strengths: strengthPairs.map(([, s]) => s).slice(0, 1),
+      workOn: { ...workOn, convention: CONVENTION[phase] },
+      language: null,
+      carryForward: { strategy: CARRY[phase], focusId: workOn.focusId },
       rowEvidence,
       focusEvidence,
-      focusUsedCount: hedgingGood ? 2 : 0,
       focusPhrasesUsed: hedgingGood ? ["may", "suggests"] : [],
       focusQuote: hedgingGood ? texts[p.hedge.idx] : topicPhase && TOPIC[i] === "S" ? p.topic.try : "",
       nextFocusSuggestion: "citing",
@@ -311,14 +302,6 @@ export function loadSampleHistory() {
       sentences,
       requestAnswers: requests.map((r) => ({ request: r, answer: ANSWERS[r] })),
       modelParagraph: p.model,
-      readerEffect: topicPhase
-        ? "A reader learns useful facts, but has to wait until the end to find out what you think. Lead with your answer."
-        : hedgingGood
-          ? "A reader comes away with a clear, believable answer: your claims are now as strong as your evidence."
-          : "A reader can follow your argument easily, but one claim promises more than a single study can show.",
-      movesComment: topicPhase
-        ? "The middle moves work well, but the opening sets the scene instead of making your claim."
-        : "A purposeful sequence: claim, evidence, explanation and a ‘so what’ that answers the question.",
       effectiveness: sampleBands(i, days.length, topicPhase, hedgingGood, texts),
     };
 

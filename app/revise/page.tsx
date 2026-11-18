@@ -132,7 +132,7 @@ export default function RevisePage() {
                 text={picked.text}
                 marks={fb ? [...(fb.workOn ? [{ quote: fb.workOn.said, className: "mark-work", label: "Rewrite" }] : []), ...fb.strengths.map((s) => ({ quote: s.quote, className: "mark-strength", label: "Went well" }))] : []}
               />
-              {fb?.summary && <p className="small">{fb.summary}</p>}
+              {(fb?.reading ?? fb?.summary) && <p className="small">{fb?.reading ?? fb?.summary}</p>}
             </section>
             <section className="card flat" aria-labelledby="ask">
               <h2 id="ask" className="eyebrow">Ask yourself</h2>
