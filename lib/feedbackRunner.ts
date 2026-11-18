@@ -37,6 +37,7 @@ export function requestFeedback(sessionId: string): Promise<void> {
         writeSeconds: s.writeSeconds,
         huntItems: s.huntItems,
         bank: recentBank.map((b) => ({ label: b.label, example: b.after })),
+        carry: s.carry ? { strategy: s.carry.strategy, own: s.carry.own } : undefined,
       });
       update((st) => {
         const sessions = st.sessions.map((x) => (x.id === sessionId ? { ...x, feedback: fb, feedbackError: undefined } : x));

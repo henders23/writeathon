@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { SessionShell } from "@/components/AppShell";
 import { Check, Close, Eye } from "@/components/Icons";
+import CarryNote from "@/components/CarryNote";
 import LastAttempt from "@/components/LastAttempt";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
@@ -25,7 +26,7 @@ import {
 import { dayKey } from "@/lib/dates";
 import { requestFeedback } from "@/lib/feedbackRunner";
 import { findPhrase, longestCopiedRun, splitSentences, wordCount } from "@/lib/match";
-import { focusForDay, getTopic, lastAttempt } from "@/lib/progress";
+import { carryInto, focusForDay, getTopic, lastAttempt } from "@/lib/progress";
 import { newId, upsertSession, useAppState } from "@/lib/store";
 import type { OutlineStep, Session } from "@/lib/types";
 
@@ -134,6 +135,9 @@ function SessionFlow() {
     [text, sources],
   );
   const copiedLong = copied.split(" ").length >= 6 ? copied : "";
+  // The strategy from the last paragraph's feedback: shown while planning and writing, then checked in today's feedback.
+  const allSessions = state?.sessions;
+  const carry = useMemo(() => (allSessions ? carryInto(allSessions) : null), [allSessions]);
 
   if (!state) return <Loading />;
   if (!profile) return <Onboarding />;
@@ -207,6 +211,7 @@ function SessionFlow() {
       requests: requests.length ? requests : undefined,
       requestNote: requestNote.trim() || undefined,
       unsure: unsure ?? undefined,
+      carry: carry ?? undefined,
       text: text.trim(),
       words,
       writeSeconds: writeSeconds || Math.floor((Date.now() - writeStart) / 1000),
@@ -295,6 +300,8 @@ function SessionFlow() {
                   : "Your plan is empty. Choose moves below, or just start writing."}
               </span>
             </div>
+
+            {carry && <CarryNote carry={carry} />}
 
             {outline.length > 0 && (
               <ol style={{ margin: 0, padding: 0, listStyle: "none" }} aria-label="Your outline">
@@ -403,6 +410,7 @@ function SessionFlow() {
               <p className="body" style={{ color: "var(--ink-2)" }}>{taskText}</p>
               {synth && <p className="small" style={{ fontSize: 14 }}>{synth}</p>}
             </div>
+            {carry && <CarryNote carry={carry} compact />}
             {sources.map((s, i) => (
               <SourceCard key={s.cite + i} source={s} compact label={sources.length > 1 ? `Source ${i + 1}` : undefined} />
             ))}
@@ -517,7 +525,7 @@ function SessionFlow() {
       <main className="container mid">
         <div className="stack g8">
           <h1 className="h1">What would you like feedback on?</h1>
-          <p className="lead">Good writers ask for the feedback they need. Your tutor-in-the-margin will answer your questions first.</p>
+          <p className="lead">Good writers ask for the feedback they need. Your tutor will answer your questions first.</p>
         </div>
 
         <section className="panel stack g16" style={{ padding: 24 }} aria-labelledby="unsure-h">

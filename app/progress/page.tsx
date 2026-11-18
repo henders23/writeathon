@@ -22,10 +22,11 @@ import {
   requestsAndCalibration,
   strengthsAndNext,
 } from "@/lib/insights";
-import { patternRows, weeklyRecap } from "@/lib/progress";
+import { feedbackLog, patternRows, weeklyRecap } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
 
 const short = (d: string) => parseDay(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const LOG_LABEL = { yes: "Used", partly: "Partly used", no: "Not used yet" } as const;
 const pct = (v: number | null) => (v === null ? "–" : `${Math.round(v * 100)}%`);
 
 export default function ProgressPage() {
@@ -49,6 +50,8 @@ export default function ProgressPage() {
   const recall = recallByGap(state);
   const rc = requestsAndCalibration(sessions);
   const recap = weeklyRecap(profile, sessions);
+  const log = feedbackLog(sessions);
+  const tried = log.filter((e) => e.outcome);
   const focus = FOCUS_BY_ID[profile.focus.id];
 
   if (h.paragraphs === 0) {
@@ -98,6 +101,46 @@ export default function ProgressPage() {
           <Tile value={h.perFive ?? "–"} label="words per 5 minutes" />
           <Tile value={h.banked} label="sentences banked" />
         </section>
+
+        {log.length > 0 && (
+          <section className="card" aria-labelledby="log-h">
+            <div className="stack g4">
+              <h2 id="log-h" className="h3">Your feedback log</h2>
+              <span className="small">
+                Feedback only counts when you use it. Each row is one strategy from your feedback, what you planned to do, and what happened in your next paragraph.
+                {tried.length > 0 && ` Used in ${tried.filter((e) => e.outcome!.acted === "yes").length} of your last ${tried.length} follow-ups.`}
+              </span>
+            </div>
+            <table className="table-view" style={{ fontSize: 14 }}>
+              <thead>
+                <tr>
+                  <th scope="col" style={{ width: 90 }}>Paragraph</th>
+                  <th scope="col">What the feedback asked for</th>
+                  <th scope="col">What I planned to do</th>
+                  <th scope="col">What happened next time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {log.map((e) => (
+                  <tr key={e.id}>
+                    <td style={{ verticalAlign: "top" }}><Link href={`/feedback/${e.id}`}>{short(e.date)}</Link></td>
+                    <td style={{ verticalAlign: "top" }}>{e.strategy}</td>
+                    <td style={{ verticalAlign: "top" }}>{e.own ?? <span className="small">Not written</span>}</td>
+                    <td style={{ verticalAlign: "top" }}>
+                      {e.outcome ? (
+                        <>
+                          <strong>{LOG_LABEL[e.outcome.acted]}.</strong> {e.outcome.comment}
+                        </>
+                      ) : (
+                        <span className="small">Waiting for your next paragraph</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         {recap?.thenNow && (
           <section className="card amber" aria-label="Then and now">

@@ -2,7 +2,7 @@ import { WARMUPS, choicesFor, findPrompt, promptFor } from "./bank";
 import type { DailyPrompt } from "./bank/types";
 import { FIRST_FOCUS, FOCUSES, FOCUS_BY_ID, MIN_WORDS_TO_COUNT, NO_SOURCE_STAND_IN, ROW_IDS, type RowId } from "./content";
 import { addDays, dayKey, daysBetween } from "./dates";
-import type { AppState, BankItem, Evidence, Profile, Session } from "./types";
+import type { AppState, BankItem, Carried, Evidence, FollowUp, Profile, Session } from "./types";
 
 /* ---------- Today's prompt and focus ---------- */
 
@@ -357,4 +357,32 @@ export function revisionCandidates(sessions: Session[], today: string = dayKey()
 export function revisionDue(sessions: Session[], today: string = dayKey()): boolean {
   const recentRevision = sessions.some((s) => s.mode === "revise" && s.date > addDays(today, -7));
   return !recentRevision && revisionCandidates(sessions, today).length >= 2;
+}
+
+/* ---------- Carrying feedback forward ---------- */
+
+/**
+ * The strategy to take into the next paragraph: from the most recent paragraph with feedback,
+ * with the student's own note on what they will do, if they wrote one.
+ */
+export function carryInto(sessions: Session[]): Carried | null {
+  const last = [...sessions]
+    .filter((s) => s.mode !== "revise" && s.feedback?.carryForward?.strategy)
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+    .pop();
+  if (!last) return null;
+  return { from: last.id, strategy: last.feedback!.carryForward!.strategy, own: last.nextStep?.trim() || undefined };
+}
+
+export type LogEntry = { id: string; date: string; topic: string; strategy: string; own?: string; outcome?: FollowUp };
+
+/** The feedback log: what each paragraph's feedback asked for, what the student planned, and what happened next time. */
+export function feedbackLog(sessions: Session[], limit = 8): LogEntry[] {
+  const outcome = new Map<string, FollowUp>();
+  for (const s of sessions) if (s.carry && s.feedback?.followUp) outcome.set(s.carry.from, s.feedback.followUp);
+  return sessions
+    .filter((s) => s.mode !== "revise" && s.feedback?.carryForward?.strategy)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+    .slice(0, limit)
+    .map((s) => ({ id: s.id, date: s.date, topic: s.topic, strategy: s.feedback!.carryForward!.strategy, own: s.nextStep?.trim() || undefined, outcome: outcome.get(s.id) }));
 }

@@ -24,6 +24,7 @@ HOW TO WRITE EVERY COMMENT
 CHOOSING THE ONE SENTENCE TO REWRITE (workOn)
 Choose the single change that would most improve how the paragraph works for its reader: usually a move that is missing, weak or out of place (a vague opening, evidence not explained, sources reported one after another without being related, no "so what"), a claim stronger than the evidence allows, or a link the reader cannot follow.
 - If the student asked about something (STUDENT ASKED ABOUT) and there is a real gap there, prefer it.
+- If LAST TIME'S STRATEGY was not acted on and that is still the main thing holding the paragraph back, choose a sentence that shows it, and keep the same strategy in carryForward (reworded so it is easier to do) rather than moving on to something new.
 - If the student named a sentence they were unsure about, consider it, but choose on merit.
 - Today's focus is only a tie-breaker between otherwise equal candidates.
 - Choose a pure language point here only if it blocks meaning. Other language points belong in "language".
@@ -49,6 +50,7 @@ RETURN
 - carryForward: ONE strategy for the student's NEXT paragraph, on a different topic. This is about their approach, not about this paragraph: a concrete routine they can follow while planning or writing (e.g. "Before you write, put your answer to the question in one sentence and make it your first sentence." or "After each piece of evidence, add one sentence that begins 'This suggests...' and says what it shows."). It should grow out of the main issue in this paragraph. One or two sentences, phrased as something to DO.
   - strategy: the routine.
   - focusId: the focus area it belongs to.
+- followUp: only if LAST TIME'S STRATEGY is given (otherwise null). The student was asked to try that strategy in today's paragraph. Say whether it shows: acted "yes" (clearly used), "partly" (attempted, or used in one place but not where it mattered), "no" (no sign of it). comment: one or two plain sentences pointing to where it shows or where it was needed, quoting briefly. Judge what the paragraph does, not whether the right words appear: adding "however" or "this suggests" without the reasoning is "partly" at most. If the strategy could not apply to today's task (e.g. it was about sources and there is no source), return null.
 - sentences: the WHOLE paragraph split into its sentences, in order, each copied exactly. For each, "move" is what the sentence does (choose from: ${MOVE_IDS.map((m) => `${m} = ${MOVES[m].does}`).join("; ")}). kind is "work" for exactly the sentence in workOn.said, "strength" for sentences quoted in strengths, otherwise "none". Labels only: no comment per sentence.
 - effectiveness: the EFFECTIVENESS PROFILE below. One entry for EACH criterion, in order: criterion id, band, comment (one plain sentence, specific to this paragraph), quote (an exact short quote that best shows it, or "").
 - modelParagraph: a model answer to the same prompt for the same reader, at a level just above the student's (B2-C1), similar length to the student's target, using and citing the SAME sources as the student (and synthesising them if there are two or more). Do not copy the student's sentences.
@@ -79,9 +81,20 @@ const str = { type: "string" };
 export const FEEDBACK_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["reading", "requestAnswers", "strengths", "workOn", "language", "carryForward", "sentences", "effectiveness", "modelParagraph", "transfer", "hunt", "rowEvidence", "focusEvidence", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion"],
+  required: ["reading", "followUp", "requestAnswers", "strengths", "workOn", "language", "carryForward", "sentences", "effectiveness", "modelParagraph", "transfer", "hunt", "rowEvidence", "focusEvidence", "focusPhrasesUsed", "focusQuote", "nextFocusSuggestion"],
   properties: {
     reading: str,
+    followUp: {
+      anyOf: [
+        {
+          type: "object",
+          additionalProperties: false,
+          required: ["acted", "comment"],
+          properties: { acted: { type: "string", enum: ["yes", "partly", "no"] }, comment: str },
+        },
+        { type: "null" },
+      ],
+    },
     requestAnswers: {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["request", "answer"], properties: { request: str, answer: str } },

@@ -161,7 +161,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
       <button className="btn" style={{ minWidth: 180 }} onClick={onStart} autoFocus>
         Start <span aria-hidden="true">→</span>
       </button>
-      <p className="small" style={{ textAlign: "center" }}>Real research · Feedback in the margins · Your progress, tracked</p>
+      <p className="small" style={{ textAlign: "center" }}>Real research · Feedback you can use · Your progress, tracked</p>
     </main>
   );
 }
@@ -170,15 +170,15 @@ function StartScreen({ onStart }: { onStart: () => void }) {
 export function HowFeedback({ standalone = false }: { standalone?: boolean }) {
   const steps = [
     { n: 1, t: "You choose what to ask about", d: "After writing, pick up to two things you want feedback on, and the sentence you’re least sure of." },
-    { n: 2, t: "Notes appear in the margin", d: "Each sentence is labelled with its move and how well it does its job. A profile shows how effective the whole paragraph is, with CEFR-aligned levels." },
+    { n: 2, t: "Your tutor says a few things well", d: "What it understood your paragraph to say, the answer to your question, one thing that works, and one sentence to rewrite, with the reason readers expect it." },
     { n: 3, t: "You rewrite one sentence", d: "You fix it yourself. Stuck? Ask for help in steps: a clue, then the pattern, then a version. Take only what you need." },
-    { n: 4, t: "You bank it, and it comes back", d: "Fixed sentences return for you to fix again from memory after 1, 3, 7, 14 and 30 days, until they’re yours." },
+    { n: 4, t: "You carry one strategy forward", d: "Each feedback ends with one thing to try next time. It is waiting when you plan your next paragraph, and your next feedback says whether it worked." },
   ];
   return (
     <section className="stack g24" aria-labelledby="how-h">
       <div className="stack g10" style={{ maxWidth: 900 }}>
         <h1 id="how-h" className="h1">How you’ll get feedback</h1>
-        <p className="lead">Feedback here works like a good tutor’s: focused on what matters most, written next to your sentences, and always followed by you doing something with it.</p>
+        <p className="lead">Feedback here works like a good tutor’s: focused on what matters most, plain about what to change, and always followed by you doing something with it.</p>
       </div>
       <ol className="grid4" style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {steps.map((s) => (
@@ -192,11 +192,11 @@ export function HowFeedback({ standalone = false }: { standalone?: boolean }) {
       <div className="grid2">
         <div className="card blue">
           <span className="eyebrow blue">What feedback will do</span>
-          <span className="body" style={{ color: "var(--blue-strong)" }}>Judge how well your writing works for its reader: your argument, your moves, how ideas connect, how you use and combine sources · answer what you asked about · quote your own words · show a model paragraph to compare with</span>
+          <span className="body" style={{ color: "var(--blue-strong)" }}>Judge how well your writing works for its reader: your argument, your moves, how ideas connect, how you use and combine sources · answer what you asked about · quote your own words · explain why readers expect what they expect · point out one language pattern for you to fix</span>
         </div>
         <div className="card amber">
           <span className="eyebrow amber">What it won’t do</span>
-          <span className="body" style={{ color: "var(--amber-deep)" }}>Rewrite your paragraph for you · mark every small language error · give you a grade (CEFR levels are indicative, to show growth)</span>
+          <span className="body" style={{ color: "var(--amber-deep)" }}>Rewrite your paragraph for you · comment on every sentence · mark every small language error · give you a grade (CEFR levels are indicative, to show growth)</span>
         </div>
       </div>
       {standalone && (

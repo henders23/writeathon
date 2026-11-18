@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import AppShell, { SessionShell } from "@/components/AppShell";
 import { Check } from "@/components/Icons";
 import Loading from "@/components/Loading";
@@ -12,8 +13,8 @@ import { BANDS, CRITERIA, MOVES, REQUEST_LABEL, ROWS, targetFor, type Band, type
 import { clearFeedbackError, requestFeedback } from "@/lib/feedbackRunner";
 import { splitSentences } from "@/lib/match";
 import { MILESTONES, counts, currentStreak } from "@/lib/progress";
-import { useAppState } from "@/lib/store";
-import type { CriterionResult, Feedback, LanguageFocus, SentenceNote, Session } from "@/lib/types";
+import { patchSession, useAppState } from "@/lib/store";
+import type { Carried, CriterionResult, Feedback, FollowUp, LanguageFocus, SentenceNote, Session } from "@/lib/types";
 
 const moveLabel = (m: string) => MOVES[m as MoveId]?.label ?? m;
 
@@ -98,6 +99,8 @@ export default function FeedbackPage() {
           </section>
         )}
 
+        {fb?.followUp && session.carry && <FollowUpNote carry={session.carry} followUp={fb.followUp} />}
+
         {fb && answers.length > 0 && (
           <section className="stack g10" aria-labelledby="asked-h">
             <h2 id="asked-h" className="quiet-h">You asked</h2>
@@ -153,6 +156,7 @@ export default function FeedbackPage() {
           <section className="stack g6" aria-labelledby="carry-h">
             <h2 id="carry-h" className="quiet-h">Take this into your next paragraph</h2>
             <p className="lead" style={{ color: "var(--ink)" }}>{fb.carryForward.strategy}</p>
+            <NextStep session={session} />
           </section>
         )}
 
@@ -200,6 +204,51 @@ export default function FeedbackPage() {
         </div>
       </main>
     </SessionShell>
+  );
+}
+
+const ACTED: Record<FollowUp["acted"], { label: string; pill: string }> = {
+  yes: { label: "You did it", pill: "blue" },
+  partly: { label: "Partly", pill: "amber" },
+  no: { label: "Not yet", pill: "grey" },
+};
+
+/** Closes the loop: did the strategy from the last paragraph's feedback show up in this one? */
+function FollowUpNote({ carry, followUp }: { carry: Carried; followUp: FollowUp }) {
+  const a = ACTED[followUp.acted] ?? ACTED.partly;
+  return (
+    <section className="stack g6" aria-labelledby="follow-h">
+      <h2 id="follow-h" className="quiet-h">Last time’s strategy</h2>
+      <p className="body" style={{ fontSize: 15 }}>
+        <span className={`pill ${a.pill}`} style={{ marginRight: 8 }}>{a.label}</span>
+        {carry.own ? `You planned: “${carry.own}”` : carry.strategy}
+      </p>
+      <p className="body" style={{ fontSize: 16, color: "var(--ink-2)" }}>{followUp.comment}</p>
+    </section>
+  );
+}
+
+/** The student restates the strategy as their own plan; it comes back when they plan the next paragraph. */
+function NextStep({ session }: { session: Session }) {
+  const [draft, setDraft] = useState(session.nextStep ?? "");
+  const saved = (session.nextStep ?? "") === draft.trim() && draft.trim().length > 0;
+  return (
+    <div className="field" style={{ marginTop: 6 }}>
+      <label htmlFor="next-step">In your own words: what will you do in your next paragraph?</label>
+      <span className="hint">One line is enough. You’ll see it again when you plan your next paragraph, and your next feedback will say whether it worked.</span>
+      <textarea id="next-step" rows={2} maxLength={300} value={draft} onChange={(e) => setDraft(e.target.value)} />
+      <div className="row g12" style={{ alignItems: "center" }}>
+        <button
+          className="btn secondary small"
+          style={{ alignSelf: "flex-start" }}
+          disabled={saved || (!draft.trim() && !session.nextStep)}
+          onClick={() => patchSession(session.id, { nextStep: draft.trim() || undefined })}
+        >
+          {saved ? "Saved" : "Save my plan"}
+        </button>
+        {saved && <span className="small" role="status">It will be waiting for you next time.</span>}
+      </div>
+    </div>
   );
 }
 

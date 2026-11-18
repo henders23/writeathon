@@ -135,7 +135,7 @@ export default function ProfilePage() {
 
             <section className="card">
               <h2 className="h3">How feedback works</h2>
-              <p className="body" style={{ fontSize: 14 }}>What you ask for, how notes appear in the margin, and how banked sentences come back.</p>
+              <p className="body" style={{ fontSize: 14 }}>What you ask for, what your tutor tells you, and how one strategy carries into your next paragraph.</p>
               <Link href="/how" className="btn secondary small" style={{ alignSelf: "flex-start" }}>See how feedback works</Link>
             </section>
 

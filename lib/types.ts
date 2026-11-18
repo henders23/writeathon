@@ -19,6 +19,10 @@ export type WorkOn = {
 export type LanguageFocus = { label: string; kind: "rule" | "word"; quotes: string[]; note: string; more: number; notMarked: string };
 /** One approach-level routine to use in the next paragraph. */
 export type CarryForward = { strategy: string; focusId: string };
+/** The strategy a session started with, carried over from the feedback on an earlier paragraph. */
+export type Carried = { from: string; strategy: string; own?: string };
+/** Whether the carried strategy shows in this paragraph. */
+export type FollowUp = { acted: "yes" | "partly" | "no"; comment: string };
 export type HuntVerdict = "natural" | "close" | "missed";
 export type HuntResult = { item: string; verdict: HuntVerdict; quote: string; note: string };
 export type Transfer = { label: string; quote: string };
@@ -46,6 +50,7 @@ export type Feedback = {
   workOn: WorkOn | null;
   language?: LanguageFocus | null;
   carryForward?: CarryForward;
+  followUp?: FollowUp | null;
   sentences?: SentenceNote[];
   effectiveness?: CriterionResult[];
   modelParagraph?: string;
@@ -95,6 +100,8 @@ export type Session = {
   requests?: string[]; // what the student asked for feedback on (request ids)
   requestNote?: string;
   unsure?: number; // index of the sentence the student was least sure of
+  carry?: Carried; // the strategy carried into this paragraph from earlier feedback
+  nextStep?: string; // after reading the feedback: what the student will do next time, in their own words
   text: string;
   words: number;
   writeSeconds: number;

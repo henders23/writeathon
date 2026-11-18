@@ -28,6 +28,7 @@ type Body = {
   writeSeconds?: number;
   huntItems?: HuntItem[];
   bank?: { label: string; example: string }[];
+  carry?: { strategy?: string; own?: string };
 };
 
 export async function POST(req: Request) {
@@ -47,6 +48,8 @@ export async function POST(req: Request) {
   const outline = (b.outline ?? []).slice(0, 8);
   const requests = (b.requests ?? []).slice(0, 2).map((r) => REQUEST_LABEL[r] ?? r);
   const note = (b.requestNote ?? "").trim().slice(0, 300);
+  const carried = (b.carry?.strategy ?? "").trim().slice(0, 400);
+  const carriedOwn = (b.carry?.own ?? "").trim().slice(0, 300);
   const sources = (b.sources?.length ? b.sources : b.source ? [b.source] : []).slice(0, 3);
   const srcLine = (src: Source, i: number) =>
     `SOURCE ${i + 1} (${src.cite}${src.own ? ", the student's own source" : src.journal ? `, ${src.journal}` : ""}; cite it as ${src.cite}): ${src.text.slice(0, 1500)}`;
@@ -67,6 +70,9 @@ export async function POST(req: Request) {
     requests.length || note
       ? `STUDENT ASKED ABOUT (answer each in requestAnswers; request = the text exactly as given here): ${[...requests, ...(note ? [`"${note}"`] : [])].join("; ")}`
       : "STUDENT ASKED ABOUT: nothing specific",
+    carried
+      ? `LAST TIME'S STRATEGY (from the feedback on the student's previous paragraph, to try today): ${carried}${carriedOwn ? `\nIN THE STUDENT'S OWN WORDS, THEY PLANNED TO: "${carriedOwn}"` : ""}`
+      : "LAST TIME'S STRATEGY: none (followUp is null)",
     b.unsure ? `SENTENCE THE STUDENT WAS LEAST SURE ABOUT: "${b.unsure.slice(0, 400)}"` : "",
     hunt.length ? `PHRASE HUNT ITEMS (in order):\n${hunt.map((h, i) => `${i + 1}. ${h.phrase}`).join("\n")}` : "",
     bank.length ? `RECENTLY BANKED PATTERNS:\n${bank.map((x) => `- ${x.label}: "${x.example}"`).join("\n")}` : "RECENTLY BANKED PATTERNS: none",
@@ -90,7 +96,7 @@ export async function POST(req: Request) {
     for (const r of ROW_IDS) if (!fb.rowEvidence?.[r]) fb.rowEvidence = { ...fb.rowEvidence, [r]: "N" };
     fb.hunt = hunt.length ? hunt.map((h, i) => fb.hunt?.[i] ?? { item: h.phrase, verdict: "missed", quote: "", note: "" }) : [];
     const labels = new Set(bank.map((x) => x.label));
-    fb.requestAnswers = fb.requestAnswers ?? [];
+    fb.requestAnswers = requests.length || note ? (fb.requestAnswers ?? []) : [];
     fb.focusEvidence = fb.focusEvidence ?? [];
     fb.focusPhrasesUsed = fb.focusPhrasesUsed ?? [];
 
@@ -121,6 +127,7 @@ export async function POST(req: Request) {
       return { ...c, band: na ? ("n/a" as const) : c.band, quote: locate(text, c.quote ?? "") ?? "" };
     });
     if (fb.carryForward && !fb.carryForward.strategy?.trim()) fb.carryForward = undefined;
+    if (!carried || !fb.followUp?.comment?.trim()) fb.followUp = null;
     return Response.json(fb);
   } catch (e) {
     console.error("feedback failed", e);

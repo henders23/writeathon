@@ -203,6 +203,24 @@ const CARRY = {
   extra: "Keep the last 30 seconds to reread for one thing only: the small words and the register of each sentence.",
 };
 
+const OWN_PLAN = {
+  topic: "Write my answer first, then the reasons.",
+  hedge: "Check each claim: can one study really show this?",
+  extra: "Reread the small words before I stop.",
+};
+const FOLLOW = {
+  topic: {
+    yes: "Your first sentence now answers the question, so the reader knows your position before the evidence arrives.",
+    partly: "Your answer is in the paragraph, but it comes in the second sentence, after a general opening.",
+    no: "The paragraph still opens with a general statement, and your answer only appears at the end.",
+  },
+  hedge: {
+    yes: "Your claims are now as strong as one study allows: ‘suggests’ and ‘may’ do that work.",
+    partly: "You qualified one claim, but the claim that rests on the study is still stated as certain.",
+    no: "The claim that rests on the study is still stated as a certain fact.",
+  },
+} as const;
+
 const BAND_STEPS: Band[] = ["B1", "B1+", "B2", "B2+", "C1"];
 /** An effectiveness profile that develops over the sample weeks. */
 function sampleBands(i: number, n: number, topicPhase: boolean, hedgingGood: boolean, texts: string[]): CriterionResult[] {
@@ -343,6 +361,17 @@ export function loadSampleHistory() {
       banked,
       sample: true,
     };
+  });
+
+  // Close the loop in the sample too: each paragraph starts with the last one's strategy and reports on it.
+  sessions.forEach((s, i) => {
+    const prev = sessions[i - 1];
+    if (i % 3 !== 1) s.nextStep = OWN_PLAN[i < 6 ? "topic" : i >= days.length - 2 ? "extra" : "hedge"];
+    if (!prev?.feedback?.carryForward || !s.feedback) return;
+    s.carry = { from: prev.id, strategy: prev.feedback.carryForward.strategy, own: prev.nextStep };
+    const topicPhase = i <= 6;
+    const acted = topicPhase ? (TOPIC[Math.min(i, TOPIC.length - 1)] === "S" ? "yes" : "no") : i >= days.length - 2 ? "yes" : i % 2 ? "partly" : "no";
+    s.feedback.followUp = { acted, comment: FOLLOW[topicPhase ? "topic" : "hedge"][acted] };
   });
 
   const ids = new Set(sessions.map((s) => s.id));
