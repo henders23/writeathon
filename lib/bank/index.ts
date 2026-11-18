@@ -48,15 +48,32 @@ export function promptFor(discipline: string, date: string): DailyPrompt {
 }
 
 /**
- * Three topics to choose from today. They rotate so every topic in the subject comes up
- * every four days, and everyone in the same subject sees the same three.
+ * Three topics to choose from today, chosen so that a student keeps meeting new questions.
+ *
+ * `written` maps a topic id to the date the student last wrote on it. Topics they have never
+ * written on come first, and the three on offer move on each day, so a topic that was offered
+ * but not chosen does not sit there day after day. When the subject's own topics run short,
+ * general academic topics fill the gap. Only when everything has been written on does a topic
+ * return, starting with the one written longest ago.
  */
-export function choicesFor(discipline: string, date: string): DailyPrompt[] {
-  const list = BANK[discipline as DisciplineId] ?? GENERAL;
-  const n = list.length;
+export function choicesFor(discipline: string, date: string, written: Record<string, string> = {}): DailyPrompt[] {
+  const own = BANK[discipline as DisciplineId] ?? GENERAL;
   const d = dayIndex(date);
-  const step = Math.max(1, Math.floor(n / 3));
-  return [0, 1, 2].map((k) => list[(((d + k * step) % n) + n) % n]);
+  const fresh = (list: DailyPrompt[]) => list.filter((p) => !written[p.id]);
+  /** Up to `n` of the list, starting from a point that moves on by three each day. */
+  const rotate = (list: DailyPrompt[], n: number) => {
+    const len = list.length;
+    return Array.from({ length: Math.min(n, len) }, (_, k) => list[(((d * 3 + k) % len) + len) % len]);
+  };
+
+  const out = rotate(fresh(own), 3);
+  if (out.length < 3 && own !== GENERAL) out.push(...rotate(fresh(GENERAL), 3 - out.length));
+  if (out.length < 3) {
+    const pool = own === GENERAL ? own : [...own, ...GENERAL];
+    const oldestFirst = pool.filter((p) => written[p.id] && !out.includes(p)).sort((a, b) => written[a.id].localeCompare(written[b.id]));
+    out.push(...oldestFirst.slice(0, 3 - out.length));
+  }
+  return out;
 }
 
 const ALL: DailyPrompt[] = [...Object.values(BANK).flat(), ...WARMUPS];

@@ -10,11 +10,20 @@ export function todaysPrompt(profile: Profile, date: string = dayKey()): DailyPr
   return promptFor(profile.discipline, date);
 }
 
-/** Today's three topics. A student's first two paragraphs use the accessible warm-ups. */
+/**
+ * Today's three topics. A student's first two paragraphs use the accessible warm-ups; after that
+ * the choice avoids questions they have already written on. Today's own paragraphs are left out
+ * of the reckoning, so the three on offer stay the same all day.
+ */
 export function todaysChoices(profile: Profile, sessions: Session[], date: string = dayKey()): DailyPrompt[] {
-  const written = sessions.filter((s) => counts(s) && s.mode !== "revise" && !s.sample).length;
-  if (written < 2 && sessions.every((s) => !s.sample)) return WARMUPS;
-  return choicesFor(profile.discipline, date);
+  const real = sessions.filter((s) => s.mode !== "revise" && !s.sample);
+  const written: Record<string, string> = {};
+  for (const s of real) if (s.date < date && (written[s.promptId] ?? "") < s.date) written[s.promptId] = s.date;
+  if (real.filter(counts).length < 2 && sessions.every((s) => !s.sample)) {
+    // Warm-ups not yet tried come first.
+    return [...WARMUPS].sort((a, b) => (written[a.id] ?? "").localeCompare(written[b.id] ?? ""));
+  }
+  return choicesFor(profile.discipline, date, written);
 }
 
 export function getTopic(id: string, state: AppState): DailyPrompt | undefined {

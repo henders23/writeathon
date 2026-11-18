@@ -14,7 +14,7 @@ Every visit opens with a welcome screen: two sentences on what Writeathon is and
 
 | Step | What happens |
 |---|---|
-| **Choose** | Three topics from the student's subject each day (or two short warm-ups for a new student), plus **Bring your own**: a question from their own module, or an extract they're reading |
+| **Choose** | Three topics from the student's subject each day, chosen to avoid questions they have already written on (general academic topics fill in once a subject's twelve are used up, and a question only returns when everything has been tried, oldest first). New students start on short warm-ups. Plus **Bring your own**: a question from their own module, or an extract they're reading |
 | **Plan** | The task is front and centre. The source sits in the left pane with **Help me understand this** (a plain-English summary and key words). The student builds an outline from 12 moves (or asks for a suggested shape) and gets suggestions (never requirements) such as using the source, a clear opening or a "so what" |
 | **Write** | Five minutes on a three-pane desk: task and source, the editor, and a live coach that ticks off planned moves sentence by sentence and tracks today's focus. Pasting is off and long copied strings from the source are flagged |
 | **Ask** | The student picks the sentence they're least sure of and up to two things to ask about (my main view, linking, citing, sounding academic, grammar…), plus an optional question of their own |
