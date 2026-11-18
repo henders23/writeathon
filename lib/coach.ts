@@ -67,6 +67,60 @@ export function suggestShape(prompt: DailyPrompt, shape: MoveId[], nSources = pr
   return out.slice(0, (prompt.warmup ? 5 : 6) + Math.max(0, nSources - 1));
 }
 
+/* ---------- A suggested plan, with reasons (only shown when the student asks) ---------- */
+
+export type SuggestedMove = { move: MoveId; why: string };
+
+/** Why this move belongs in a paragraph for this task: the reader's expectation, not just the label. */
+function reasonFor(move: MoveId, i: number, prompt: DailyPrompt, sources: Source[], prev?: MoveId): string {
+  const reader = prompt.frame?.reader ?? "your reader";
+  const cite = sources[0]?.cite;
+  const first = i === 0;
+  switch (move) {
+    case "claim":
+      return first
+        ? `The task asks a question, and ${reader} will look for your answer before anything else. Putting it first tells them how to read every sentence after it.`
+        : "Now that the reader knows what the source says, they need to know where you stand on it.";
+    case "define":
+      return "The task turns on what a term means. The reader needs your definition before they can follow what you do with it.";
+    case "context":
+      return "The reader needs to know which view or situation you are answering before your answer makes sense.";
+    case "summarise":
+      return cite
+        ? `You are responding to ${cite}, so the reader first needs to know what it says, briefly and in your own words.`
+        : "The reader needs to know what you are responding to before you respond to it.";
+    case "explain":
+      if (prev === "data" || prev === "evidence" || prev === "summarise" || prev === "example")
+        return "Figures and findings do not explain themselves. This sentence tells the reader what you think lies behind them, which is where your own thinking shows.";
+      return "A claim on its own is only an opinion. This sentence gives the reason, or shows how it works, which is what makes the claim believable.";
+    case "example":
+      return "A concrete case lets the reader see what your point looks like in practice.";
+    case "evidence":
+      return cite
+        ? `Academic readers expect a claim to rest on more than your word. ${cite} gives you support: report what it found and cite it.`
+        : "Academic readers expect a claim to rest on more than your word, so show what supports it.";
+    case "data":
+      return cite
+        ? `This task is about figures. Give the reader the key number from ${cite} and say what it shows, rather than listing every figure.`
+        : "This task is about figures. Give the reader the key number and say what it shows.";
+    case "synthesise":
+      return `You chose ${sources.length} sources. Readers expect you to say how they relate (do they agree, differ, or build on each other?), not to report them one after another.`;
+    case "concede":
+      return "Admitting what is true in the other view shows the reader you have considered it, which makes your own position more convincing.";
+    case "counter":
+      return "Having conceded a point, you need to show the reader why your position still holds.";
+    case "sowhat":
+      return "Without this, the reader is left asking why your point matters. A last sentence that says what follows from it completes the paragraph.";
+    case "recommend":
+      return `The task asks what should be done, so ${reader} will expect you to end with a clear recommendation.`;
+  }
+}
+
+/** A typical plan for this task and number of sources, each move with the reason it is there. */
+export function suggestPlan(prompt: DailyPrompt, shape: MoveId[], sources: Source[]): SuggestedMove[] {
+  return suggestShape(prompt, shape, sources.length).map((move, i, all) => ({ move, why: reasonFor(move, i, prompt, sources, all[i - 1]) }));
+}
+
 /* ---------- Live writing signals ---------- */
 
 const HEDGES = ["may", "might", "could", "tend to", "tends to", "appears to", "appear to", "seems to", "seem to", "likely", "possibly", "perhaps", "some evidence", "to some extent", "arguably", "suggests", "usually", "often", "generally"];

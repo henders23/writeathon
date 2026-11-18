@@ -11,7 +11,7 @@ import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
 import SourceCard from "@/components/SourceCard";
 import type { DailyPrompt } from "@/lib/bank/types";
-import { focusSignal, outlineChecks, suggestShape } from "@/lib/coach";
+import { focusSignal, outlineChecks, suggestPlan } from "@/lib/coach";
 import { availableSources, chosenSources, isCited, synthesisLine } from "@/lib/sources";
 import {
   FOCUS_BY_ID,
@@ -79,7 +79,7 @@ function SessionFlow() {
   const [pasteBlocked, setPasteBlocked] = useState(0);
   const [hints, setHints] = useState<number[]>([]);
   const [peek, setPeek] = useState(false);
-  const [editMoves, setEditMoves] = useState(false);
+  const [help, setHelp] = useState<null | "suggest" | "check">(null);
   const [requests, setRequests] = useState<string[]>([]);
   const [requestNote, setRequestNote] = useState("");
   const [unsure, setUnsure] = useState<number | null>(null);
@@ -105,10 +105,8 @@ function SessionFlow() {
       if (d.nSources) setNSources(d.nSources);
       if (d.stage === "write") setWriteStart(Date.now() - (d.writeSeconds ?? 0) * 1000);
       if (d.writeSeconds) setWriteSeconds(d.writeSeconds);
-    } else {
-      // Start from a suggested shape, so the plan is something to adjust rather than build from nothing.
-      setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], chosenSources(prompt, nSources).length).map((m) => ({ move: m, note: "" })));
     }
+    // Otherwise the plan starts empty: choosing the moves is the student's job. A suggestion is there if they ask.
     // nSources is read once, when the session opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt, mode, today]);
@@ -241,12 +239,7 @@ function SessionFlow() {
             aria-checked={sources.length === k}
             className="chip"
             aria-pressed={sources.length === k}
-            onClick={() => {
-              setNSources(k);
-              if (k > 1 && outline.length && !outline.some((o) => o.move === "synthesise")) {
-                setOutline((o) => [...o.slice(0, Math.max(1, o.length - 1)), { move: "synthesise", note: "" }, ...o.slice(Math.max(1, o.length - 1))]);
-              }
-            }}
+            onClick={() => setNSources(k)}
           >
             Use {k} source{k === 1 ? "" : "s"}
           </button>
@@ -257,8 +250,7 @@ function SessionFlow() {
 
   /* ---------- Plan ---------- */
   if (stage === "plan") {
-    const picking = editMoves || outline.length === 0;
-    const tip = outline.length ? checks.find((c) => !c.ok) : undefined;
+    const suggestion = help === "suggest" ? suggestPlan(prompt, TASK_SHAPES[prompt.task], sources) : [];
     return (
       <SessionShell step={0}>
         <main className="session-main">
@@ -296,8 +288,8 @@ function SessionFlow() {
               <h1 id="plan-h" className="h2">What will each sentence do?</h1>
               <span className="small" style={{ fontSize: 14 }}>
                 {outline.length
-                  ? "A suggested shape for this task. Add a few words to each move if you like."
-                  : "Your plan is empty. Choose moves below, or just start writing."}
+                  ? "Your plan, in the order you will write it. Add a few words to each move if you like."
+                  : "Build your plan: choose a move for each sentence, in the order you will write them."}
               </span>
             </div>
 
@@ -319,53 +311,83 @@ function SessionFlow() {
                       onChange={(e) => setOutline((all) => all.map((x, k) => (k === i ? { ...x, note: e.target.value } : x)))}
                     />
                     <div className="row g4">
-                      {editMoves && (
-                        <>
-                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label={`Move ${MOVES[o.move].label} up`}>↑</button>
-                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, 1)} disabled={i === outline.length - 1} aria-label={`Move ${MOVES[o.move].label} down`}>↓</button>
-                          <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => setOutline((all) => all.filter((_, k) => k !== i))} aria-label={`Remove ${MOVES[o.move].label}`}>
-                            <Close size={14} />
-                          </button>
-                        </>
-                      )}
+                      <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, -1)} disabled={i === 0} aria-label={`Move ${MOVES[o.move].label} up`}>↑</button>
+                      <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => moveStep(i, 1)} disabled={i === outline.length - 1} aria-label={`Move ${MOVES[o.move].label} down`}>↓</button>
+                      <button className="round-btn" style={{ width: 36, height: 36 }} onClick={() => setOutline((all) => all.filter((_, k) => k !== i))} aria-label={`Remove ${MOVES[o.move].label}`}>
+                        <Close size={14} />
+                      </button>
                     </div>
                   </li>
                 ))}
               </ol>
             )}
 
-            {outline.length > 0 && (
-              <button className="text-btn" style={{ alignSelf: "flex-start", fontSize: 15, fontWeight: 600, minHeight: 44 }} aria-expanded={editMoves} onClick={() => setEditMoves((v) => !v)}>
-                {editMoves ? "Done changing the moves" : "Change the moves"}
-              </button>
-            )}
-
-            {picking && (
-              <div className="stack g12">
-                <div className="row between wrap g8">
-                  <span className="label">Add a move{outline.length >= maxMoves ? " (outline full)" : ""}</span>
-                  <button className="text-btn" onClick={() => setOutline(suggestShape(prompt, TASK_SHAPES[prompt.task], sources.length).map((m) => ({ move: m, note: "" })))}>
-                    Back to the suggested shape
-                  </button>
-                </div>
-                <div className="grid4" style={{ gap: 12 }}>
-                  {GROUPS.map((g) => (
-                    <div key={g} className="stack g6">
-                      <span className="eyebrow">{g}</span>
-                      {MOVE_IDS.filter((m) => MOVES[m].group === g).map((m) => (
-                        <button key={m} className="move-btn" onClick={() => addMove(m)} disabled={outline.length >= maxMoves}>
-                          <strong style={{ fontSize: 14 }}>{MOVES[m].label}</strong>
-                          <span className="small" style={{ fontSize: 12 }}>{MOVES[m].does}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+            <div className="stack g12">
+              <span className="label">
+                {outline.length >= maxMoves ? "Your plan is full" : outline.length ? "Add your next move" : "Choose your first move"}
+              </span>
+              <div className="grid4" style={{ gap: 12 }}>
+                {GROUPS.map((g) => (
+                  <div key={g} className="stack g6">
+                    <span className="eyebrow">{g}</span>
+                    {MOVE_IDS.filter((m) => MOVES[m].group === g).map((m) => (
+                      <button key={m} className="move-btn" onClick={() => addMove(m)} disabled={outline.length >= maxMoves}>
+                        <strong style={{ fontSize: 14 }}>{MOVES[m].label}</strong>
+                        <span className="small" style={{ fontSize: 12 }}>{MOVES[m].does}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+
+            <div className="row g20 wrap">
+              <button className="text-btn" style={{ fontSize: 15, fontWeight: 600, minHeight: 44 }} aria-expanded={help === "suggest"} onClick={() => setHelp(help === "suggest" ? null : "suggest")}>
+                {help === "suggest" ? "Hide the suggestion" : "Not sure? Suggest a plan"}
+              </button>
+              {outline.length > 0 && (
+                <button className="text-btn" style={{ fontSize: 15, fontWeight: 600, minHeight: 44 }} aria-expanded={help === "check"} onClick={() => setHelp(help === "check" ? null : "check")}>
+                  {help === "check" ? "Hide the check" : "Check my plan"}
+                </button>
+              )}
+            </div>
 
             <div aria-live="polite">
-              {tip && <p className="hint-line">Suggestion: {tip.text}</p>}
+              {help === "suggest" && (
+                <section className="hint-line stack g12" aria-label="A suggested plan">
+                  <span>
+                    <strong>One plan that would work for this task</strong>, with the reason for each move. It is not the only good plan: use it, change it, or take one idea from it.
+                  </span>
+                  <ol className="stack g10" style={{ margin: 0, paddingLeft: 20 }}>
+                    {suggestion.map((x, i) => (
+                      <li key={i}>
+                        <strong>{MOVES[x.move].label}.</strong> {x.why}
+                      </li>
+                    ))}
+                  </ol>
+                  <button
+                    className="btn secondary small"
+                    style={{ alignSelf: "flex-start" }}
+                    onClick={() => {
+                      setOutline(suggestion.map((x) => ({ move: x.move, note: "" })));
+                      setHelp(null);
+                    }}
+                  >
+                    {outline.length ? "Replace my plan with this one" : "Use this plan"}
+                  </button>
+                </section>
+              )}
+              {help === "check" && outline.length > 0 && (
+                <section className="hint-line stack g8" aria-label="A check of your plan">
+                  <strong>Your plan against this task</strong>
+                  <ul className="stack g6" style={{ margin: 0, paddingLeft: 20 }}>
+                    {checks.map((c, i) => (
+                      <li key={i}>{c.ok ? "✓ " : ""}{c.text}</li>
+                    ))}
+                  </ul>
+                  <span>These are suggestions, not rules. Your plan is yours to decide.</span>
+                </section>
+              )}
             </div>
 
             <div className="row g20 wrap">
