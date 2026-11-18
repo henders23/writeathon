@@ -2,7 +2,7 @@ import { WARMUPS, choicesFor, findPrompt, promptFor } from "./bank";
 import type { DailyPrompt } from "./bank/types";
 import { FIRST_FOCUS, FOCUSES, FOCUS_BY_ID, MIN_WORDS_TO_COUNT, NO_SOURCE_STAND_IN, ROW_IDS, type RowId } from "./content";
 import { addDays, dayKey, daysBetween } from "./dates";
-import type { AppState, BankItem, DictEntry, Evidence, Profile, Session, SurgeryRun } from "./types";
+import type { AppState, BankItem, Evidence, Profile, Session } from "./types";
 
 /* ---------- Today's prompt and focus ---------- */
 
@@ -291,12 +291,6 @@ export function bestHuntThisWeek(sessions: Session[], today: string = dayKey()) 
   return scores.length ? Math.max(...scores) : null;
 }
 
-export function bestSurgeryThisWeek(runs: SurgeryRun[], today: string = dayKey()) {
-  const weekAgo = addDays(today, -6);
-  const scores = runs.filter((r) => r.date >= weekAgo).map((r) => r.points);
-  return scores.length ? Math.max(...scores) : null;
-}
-
 /* ---------- Bank: spaced retrieval ---------- */
 
 /** Days until the next review after each successful recall. */
@@ -363,17 +357,4 @@ export function revisionCandidates(sessions: Session[], today: string = dayKey()
 export function revisionDue(sessions: Session[], today: string = dayKey()): boolean {
   const recentRevision = sessions.some((s) => s.mode === "revise" && s.date > addDays(today, -7));
   return !recentRevision && revisionCandidates(sessions, today).length >= 2;
-}
-
-/* ---------- Dictionary: spaced quizzes ---------- */
-
-export function dictDue(entries: DictEntry[], today: string = dayKey()): DictEntry[] {
-  return entries.filter((e) => e.step < REVIEW_INTERVALS.length && e.due <= today).sort((a, b) => a.due.localeCompare(b.due));
-}
-
-export function scheduleDict(e: DictEntry, ok: boolean, type: DictEntry["reviews"][number]["type"], today: string = dayKey()): DictEntry {
-  const reviews = [...e.reviews, { date: today, ok, type }];
-  if (!ok) return { ...e, reviews, step: Math.max(0, e.step - 1), due: addDays(today, 1) };
-  const step = e.step + 1;
-  return { ...e, reviews, step, due: step >= REVIEW_INTERVALS.length ? "9999-12-31" : addDays(today, REVIEW_INTERVALS[step]) };
 }

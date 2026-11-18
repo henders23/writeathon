@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { Book, Bookmark } from "@/components/Icons";
+import { Bookmark } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
 import { ROWS, ROW_IDS } from "@/lib/content";
@@ -44,9 +44,6 @@ export default function BankPage() {
                 <Bookmark size={18} color="var(--on-ink)" /> Fix {Math.min(3, due.length)} from memory
               </Link>
             )}
-            <Link href="/dictionary" className="btn secondary">
-              <Book size={18} color="var(--blue)" /> Your dictionary
-            </Link>
           </div>
         </div>
 
@@ -84,7 +81,7 @@ export default function BankPage() {
                         </div>
                       </div>
                       <p className="bank-before"><span className="sr-only">Before: </span>{b.before}</p>
-                      <p className="bank-after" data-dict="Your bank"><span className="sr-only">After: </span>{b.after}</p>
+                      <p className="bank-after"><span className="sr-only">After: </span>{b.after}</p>
                       {b.transfer && <p className="small"><strong style={{ color: "var(--ink)" }}>Your own example:</strong> {b.transfer}</p>}
                       <div className="row between wrap g8" style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>
                         <span className="small">{nextReviewLabel(b, today)}</span>

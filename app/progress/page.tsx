@@ -91,13 +91,12 @@ export default function ProgressPage() {
           <span className="small">Current focus: <strong style={{ color: "var(--ink)" }}>{focus?.label}</strong></span>
         </div>
 
-        <section className="grid4" aria-label="Headline numbers" style={{ gridTemplateColumns: "repeat(6, minmax(0, 1fr))" }}>
+        <section className="grid4" aria-label="Headline numbers" style={{ gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
           <Tile value={h.paragraphs} label="paragraphs written" />
           <Tile value={h.words.toLocaleString("en-GB")} label="words written" />
           <Tile value={h.streak} label={`day streak · best ${Math.max(h.best, h.streak)}`} />
           <Tile value={h.perFive ?? "–"} label="words per 5 minutes" />
           <Tile value={h.banked} label="sentences banked" />
-          <Tile value={h.dictionary} label={`words collected · ${h.mastered} mastered`} />
         </section>
 
         {recap?.thenNow && (

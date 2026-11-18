@@ -192,36 +192,6 @@ export const HUNT_SCHEMA = {
   },
 } as const;
 
-/* ---------- Sentence Surgery ---------- */
-
-export const SURGERY_INSTRUCTIONS = `You design "Sentence Surgery", a 90-second sentence-combining game for university students learning academic English (B1-C1). Sentence combining is a well-evidenced way to build syntactic control.
-
-Create exactly three operations on today's topic (given below). Each operation is 2 or 3 short, simple sentences (each 5-12 words, plain and factually sensible) that a skilled writer would combine into ONE well-formed academic sentence. Use a different technique for each operation, chosen from: relative clause (which/who/whose); concession (although/while/whereas); cause or result (because/so/as a result of); participle clause (-ing or -ed opener); noun phrase (nominalisation, e.g. "The rise in X led to…"); apposition.
-
-For each give: sentences (the short sentences), technique (a short student-facing name, e.g. "Concession with although"), hint (one short line telling them how to start, without giving the full answer), model (one good combined sentence that keeps every piece of information).`;
-
-export const SURGERY_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["items"],
-  properties: {
-    items: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["sentences", "technique", "hint", "model"],
-        properties: { sentences: { type: "array", items: str }, technique: str, hint: str, model: str },
-      },
-    },
-  },
-} as const;
-
-export const SURGERY_CHECK_INSTRUCTIONS = `A student combined some short sentences into one academic sentence. Decide whether it works.
-
-ok = true if: it is one grammatical sentence; it keeps all the important information from the short sentences; it reads as natural academic English. Using the suggested technique is NOT required; any good combination counts. Small slips (a missing article) can still be ok, but mention them.
-comment: one short, encouraging sentence in plain British English saying what worked or what to fix.`;
-
 /* ---------- Transfer: use the pattern somewhere new ---------- */
 
 export const TRANSFER_INSTRUCTIONS = `A student has fixed a sentence after seeing a model version. To show they have learned the pattern (not just copied it), they must now write ONE new sentence that uses the same pattern on a clearly different topic.
@@ -266,36 +236,6 @@ export const REVISION_SCHEMA = {
     nextStep: str,
   },
 } as const;
-
-/* ---------- Dictionary ---------- */
-
-export const DEFINE_INSTRUCTIONS = `You write entries for a learner's academic English dictionary. Students are university students with English at B1-C1. Given a word or short phrase, the sentence it appeared in, and the student's subject, return:
-- headword: the dictionary form (e.g. "mitigate" for "mitigating"; keep a phrase as a phrase).
-- partOfSpeech: e.g. "verb", "noun (uncountable)", "adjective", "phrase".
-- definition: the meaning IN THIS CONTEXT, in plain English, under 20 words, without using the word itself.
-- example: a NEW natural academic sentence using the word in the same sense (not the original sentence).
-- collocations: 2-4 common academic collocations or patterns (e.g. "mitigate the risk of", "help to mitigate").
-- distractors: 3 wrong but plausible definitions of similar length and style, for a multiple-choice quiz.
-- wrongWords: 3 real words of the same part of speech that do NOT fit the example sentence, for a gap-fill quiz.
-British English.`;
-
-export const DEFINE_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["headword", "partOfSpeech", "definition", "example", "collocations", "distractors", "wrongWords"],
-  properties: {
-    headword: str,
-    partOfSpeech: str,
-    definition: str,
-    example: str,
-    collocations: { type: "array", items: str },
-    distractors: { type: "array", items: str },
-    wrongWords: { type: "array", items: str },
-  },
-} as const;
-
-export const USE_CHECK_INSTRUCTIONS = `A student learning academic English is practising a vocabulary item by writing their own sentence with it. Decide whether the sentence uses the word correctly, with the right meaning, grammar and typical collocation, in a way that would suit academic writing.
-ok = true if it does (small unrelated slips are fine). comment: one short, encouraging sentence in plain British English; if not ok, say what to change.`;
 
 /* ---------- Help me understand ---------- */
 

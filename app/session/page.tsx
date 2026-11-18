@@ -261,8 +261,8 @@ function SessionFlow() {
             <span className={`eyebrow${mode === "hunt" ? " amber" : ""}`}>
               {label} · {prompt.topic}
             </span>
-            <p className="prompt" style={{ maxWidth: 860 }} data-dict="Writeathon task">{taskText}</p>
-            {synth && <p className="body" style={{ maxWidth: 760 }} data-dict="Writeathon task">{synth}</p>}
+            <p className="prompt" style={{ maxWidth: 860 }}>{taskText}</p>
+            {synth && <p className="body" style={{ maxWidth: 760 }}>{synth}</p>}
           </header>
 
           <aside className="stack g16" aria-label={sources.length > 1 ? "Your sources" : "Your source"}>
@@ -400,7 +400,7 @@ function SessionFlow() {
           <aside className="stack g20" aria-label="Task and source">
             <div className="stack g6">
               <h2 className="quiet-h">The task</h2>
-              <p className="body" style={{ color: "var(--ink-2)" }} data-dict="Writeathon task">{taskText}</p>
+              <p className="body" style={{ color: "var(--ink-2)" }}>{taskText}</p>
               {synth && <p className="small" style={{ fontSize: 14 }}>{synth}</p>}
             </div>
             {sources.map((s, i) => (

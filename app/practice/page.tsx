@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
-import { Book, Bookmark, Plus, Repeat, Scissors, Search } from "@/components/Icons";
+import { Bookmark, Plus, Repeat, Search } from "@/components/Icons";
 import Loading from "@/components/Loading";
 import Onboarding from "@/components/Onboarding";
 import { TASKS } from "@/lib/content";
 import { dayKey } from "@/lib/dates";
-import { bestHuntThisWeek, bestSurgeryThisWeek, dictDue, dueBankItems, revisionCandidates, todaysChoices } from "@/lib/progress";
+import { bestHuntThisWeek, dueBankItems, revisionCandidates, todaysChoices } from "@/lib/progress";
 import { useAppState } from "@/lib/store";
 
 function Count({ n, label }: { n: number; label: string }) {
@@ -24,12 +24,10 @@ export default function PracticePage() {
   if (!state.profile) return <Onboarding />;
 
   const today = dayKey();
-  const { profile, sessions, bank, dictionary, surgeryRuns } = state;
+  const { profile, sessions, bank } = state;
   const choices = todaysChoices(profile, sessions, today);
   const bankDue = dueBankItems(bank, today, 99).length;
-  const wordsDue = dictDue(dictionary, today).length;
   const toRevise = revisionCandidates(sessions, today).length;
-  const bestSurgery = bestSurgeryThisWeek(surgeryRuns, today);
   const bestHunt = bestHuntThisWeek(sessions, today);
 
   return (
@@ -42,20 +40,8 @@ export default function PracticePage() {
         </div>
 
         <section className="stack g12" aria-labelledby="games-h">
-          <h2 id="games-h" className="h2">Quick games</h2>
+          <h2 id="games-h" className="h2">A game</h2>
           <div className="grid2">
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow blue row g6"><Scissors size={16} color="var(--blue)" /> Sentence Surgery</span>
-                <span className="small">90 seconds</span>
-              </div>
-              <strong style={{ fontSize: 18 }}>Join short sentences into one academic sentence</strong>
-              <p className="body" style={{ fontSize: 14 }}>Three operations against the clock. Builds the sentence control that lets you pack ideas together clearly.</p>
-              <div className="row between" style={{ marginTop: "auto" }}>
-                <span className="small">{bestSurgery !== null ? `Your best this week: ${bestSurgery}` : "No runs this week yet"}</span>
-                <Link className="btn small" href="/surgery">Play</Link>
-              </div>
-            </article>
             <article className="card">
               <div className="row between">
                 <span className="eyebrow amber row g6"><Search size={16} color="var(--amber)" /> Phrase Hunt</span>
@@ -81,7 +67,7 @@ export default function PracticePage() {
 
         <section className="stack g12" aria-labelledby="review-h">
           <h2 id="review-h" className="h2">Make it stick</h2>
-          <div className="grid3">
+          <div className="grid2">
             <article className="card">
               <div className="row between">
                 <span className="eyebrow row g6"><Bookmark size={16} color="var(--blue)" /> Bank review</span>
@@ -90,20 +76,6 @@ export default function PracticePage() {
               <p className="body" style={{ fontSize: 14 }}>Fix sentences you banked again, from memory, at growing gaps.</p>
               <Link className={`btn small${bankDue ? "" : " secondary"}`} style={{ marginTop: "auto", alignSelf: "flex-start" }} href={bankDue ? "/review" : "/bank"}>
                 {bankDue ? "Review now" : "Open your bank"}
-              </Link>
-            </article>
-            <article className="card">
-              <div className="row between">
-                <span className="eyebrow row g6"><Book size={16} color="var(--blue)" /> Dictionary quiz</span>
-                <Count n={wordsDue} label="due" />
-              </div>
-              <p className="body" style={{ fontSize: 14 }}>
-                {dictionary.length
-                  ? `Quiz yourself on the ${dictionary.length} word${dictionary.length === 1 ? "" : "s"} you’ve collected: meaning, gap-fill, recall and use.`
-                  : "Select any word in a source or in your feedback to add it to your dictionary. Then quiz yourself here."}
-              </p>
-              <Link className={`btn small${wordsDue ? "" : " secondary"}`} style={{ marginTop: "auto", alignSelf: "flex-start" }} href={wordsDue ? "/dictionary/quiz" : "/dictionary"}>
-                {wordsDue ? "Start quiz" : "Open your dictionary"}
               </Link>
             </article>
             <article className="card">

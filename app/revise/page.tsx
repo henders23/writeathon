@@ -121,7 +121,7 @@ export default function RevisePage() {
       <main className="container">
         <div className="stack g8" style={{ maxWidth: 900 }}>
           {eyebrow}
-          <p className="prompt" data-dict="Writeathon task">{picked.promptText}</p>
+          <p className="prompt">{picked.promptText}</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "360px minmax(0, 1fr)", gap: 24, alignItems: "start" }}>

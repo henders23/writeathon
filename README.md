@@ -6,7 +6,7 @@ Ten minutes of academic writing a day, designed for a laptop. University student
 
 ## The pedagogy in one paragraph
 
-Students learn more from planning and revising than from drafting, so the session is built around both. Before writing, the student plans the paragraph's **moves** (what each sentence will do: claim, evidence, concede, so what…) and gets an instant check against the task. After writing, they choose what to ask about and name the sentence they're least sure of, which builds the self-assessment that independent writers need. Feedback is focused: every sentence is labelled with the move it performs, strengths quote the student's own words, and one sentence is chosen for rewriting. Hints step up only as far as they're needed (a clue, then the pattern on a different topic, then a model). The app never rewrites the paragraph for them. Fixed sentences go into a **bank** and come back for spaced retrieval; new words go into a **dictionary** and come back as quizzes. When a student reuses a banked pattern *without being asked*, the app marks it: that unprompted reuse is the evidence that learning has happened.
+Students learn more from planning and revising than from drafting, so the session is built around both. Before writing, the student plans the paragraph's **moves** (what each sentence will do: claim, evidence, concede, so what…) and gets an instant check against the task. After writing, they choose what to ask about and name the sentence they're least sure of, which builds the self-assessment that independent writers need. Feedback is focused: every sentence is labelled with the move it performs, strengths quote the student's own words, and one sentence is chosen for rewriting. Hints step up only as far as they're needed (a clue, then the pattern on a different topic, then a model). The app never rewrites the paragraph for them. Fixed sentences go into a **bank** and come back for spaced retrieval. When a student reuses a banked pattern *without being asked*, the app marks it: that unprompted reuse is the evidence that learning has happened.
 
 ## The session
 
@@ -32,17 +32,13 @@ Before planning, students choose how many source extracts to draw on. One source
 
 Every source extract in `lib/bank/` is copied word for word from the abstract (or author summary) of a real, peer-reviewed open-access article published under CC BY, CC BY-SA or CC0, which allow reuse with attribution. Each source records the authors, year, title, journal, DOI or URL, licence and section, and the app shows the full reference under the extract. A " … " marks where a sentence has been left out. Some days are deliberately prompt-only. Data on data-task days comes from the article itself. Student-supplied sources ("Bring your own") are labelled as the student's own.
 
-## Dictionary
-
-Students can select a word or short phrase anywhere marked as readable text (sources, tasks, plain-English explanations, feedback, model paragraphs) and choose **Add to my dictionary**. The AI writes a learner's definition for the meaning in that sentence, an example, collocations and quiz distractors. Quizzes follow the same 1, 3, 7, 14, 30-day schedule as the bank and get harder as a word is learned: choose the meaning → fill the gap → recall the word from its meaning → write your own sentence (checked by the AI). A wrong answer brings the word back tomorrow.
-
 ## Progress dashboard
 
 Computed entirely from the student's own work: headline numbers; the five areas (Argument, Organisation, Sources, Range, Accuracy) then vs now; strengths and where to grow next, with quotes; writing fluency (words per five minutes); a language snapshot (hedging, sentence length, reporting-verb variety); all 17 focuses across the last 12 paragraphs; which paragraph moves the student uses and how closely they follow their plan; recall of banked sentences by gap; what they ask about; and how often their least-sure sentence matches the tutor's choice. Every chart has a table view.
 
 ## Also in the app
 
-- **Practice:** Sentence Surgery (90-second sentence combining), Phrase Hunt on any of today's topics, bank review, dictionary quiz, weekly revision day, bring your own.
+- **Practice:** Phrase Hunt on any of today's topics, bank review, weekly revision day, bring your own.
 - **Weekly revision day:** rework a whole paragraph; the AI sorts each change by level (idea, structure, sentence, word).
 - **Streaks with freezes**, a focus that moves on once secured, and a seminar-group leaderboard (**a demo for now**: classmates are examples until accounts exist).
 - **Light and dark themes**, switchable from the top bar.
@@ -59,9 +55,9 @@ Everything about a student is stored in their own browser (`localStorage`). Ther
    - `ACCESS_CODE`: strongly recommended before sharing the link.
 3. Deploy (redeploy after changing environment variables).
 
-Optional model overrides: `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`, used for feedback, rewrite checks, revision and game generation) and `ANTHROPIC_FAST_MODEL` (default `claude-haiku-5-5`, used for dictionary definitions, source explanations, word-use checks and Sentence Surgery checks). On Claude, JSON comes back through structured outputs, and the long instructions are prompt-cached.
+Optional model overrides: `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`, used for feedback, rewrite checks, revision and game generation) and `ANTHROPIC_FAST_MODEL` (default `claude-haiku-5-5`, used for source explanations). On Claude, JSON comes back through structured outputs, and the long instructions are prompt-cached.
 
-To demo the dashboard, bank and dictionary without weeks of practice, open the profile (initials, top right) and choose **Load sample history**.
+To demo the dashboard and bank without weeks of practice, open the profile (initials, top right) and choose **Load sample history**.
 
 ## Running locally
 
@@ -80,12 +76,11 @@ For offline testing you can point `ANTHROPIC_BASE_URL` (or `OPENAI_BASE_URL`) at
 | `lib/bank/` | Topics and genuine source extracts, one file per subject, plus `warmups.ts` |
 | `lib/content.ts` | The five areas, 17 focuses, task types, paragraph moves and task shapes, feedback requests |
 | `lib/coach.ts` | Free in-browser coaching: outline checks, suggested shapes, live focus signals, language measures |
-| `lib/instructions.ts` | AI instructions and JSON schemas: feedback, rewrite, revision, games, dictionary, explanations |
+| `lib/instructions.ts` | AI instructions and JSON schemas: feedback, rewrite, revision, Phrase Hunt, explanations |
 | `lib/progress.ts`, `lib/insights.ts` | Streaks, topic choice, focus selection, spaced schedules, and everything on the dashboard |
 | `app/session` | Plan → Write → Ask (and Phrase Hunt writing) |
 | `app/feedback/[id]` + `components/RewriteIt.tsx` | Margin feedback, rewrite with stepped hints, banking |
 | `app/own` | Bring your own topic or source |
-| `app/dictionary`, `app/dictionary/quiz`, `components/DictionaryCapture.tsx` | Word capture, dictionary and quizzes |
 | `app/progress` + `components/Charts.tsx` | The dashboard |
-| `app/practice`, `app/review`, `app/revise`, `app/hunt`, `app/surgery` | Practice modes |
+| `app/practice`, `app/review`, `app/revise`, `app/hunt` | Practice modes |
 | `app/api/*` | Server routes for each AI call |

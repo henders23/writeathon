@@ -21,8 +21,6 @@ export function headline(state: AppState) {
     best: state.profile ? bestStreak(state.profile, state.sessions) : 0,
     perFive: wordsPerFive(written),
     banked: state.bank.length,
-    dictionary: state.dictionary.length,
-    mastered: state.dictionary.filter((d) => d.step >= REVIEW_INTERVALS.length).length,
   };
 }
 

@@ -69,7 +69,7 @@ export default function RevisionResultPage() {
             </div>
             <div className="card">
               <span className="eyebrow blue">After</span>
-              <p className="paragraph" style={{ fontSize: 17, color: "var(--ink)" }} data-dict="Your revision">{session.text}</p>
+              <p className="paragraph" style={{ fontSize: 17, color: "var(--ink)" }}>{session.text}</p>
             </div>
           </section>
 

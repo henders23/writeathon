@@ -6,9 +6,9 @@ import { addDays, dayKey } from "./dates";
 import { wordCount } from "./match";
 import { REVIEW_INTERVALS } from "./progress";
 import { getState, newId, update } from "./store";
-import type { BankItem, CriterionResult, DictEntry, Evidence, Feedback, OutlineStep, QuizType, SentenceNote, Session, Strength, WorkOn } from "./types";
+import type { BankItem, CriterionResult, Evidence, Feedback, OutlineStep, SentenceNote, Session, Strength, WorkOn } from "./types";
 
-// A believable three-week history so the Progress, Bank, Dictionary, recap and streak screens can be
+// A believable three-week history so the Progress, Bank, recap and streak screens can be
 // demonstrated. The paragraphs answer the three warm-up tasks, so every quote and citation is coherent
 // with a genuine source.
 
@@ -191,34 +191,20 @@ const ANSWERS: Record<string, string> = {
   sentences: "Good variety: you combine a main clause with ‘while’ and ‘because’ without losing control.",
 };
 
-const DICT: { word: string; partOfSpeech: string; definition: string; example: string; collocations: string[]; distractors: string[]; wrongWords: string[]; context: string; para: number }[] = [
-  { word: "correlate", partOfSpeech: "verb", definition: "to be connected so that when one thing changes, the other tends to change too", example: "Hours of sleep correlated with exam results.", collocations: ["correlate with", "strongly correlate", "be positively correlated"], distractors: ["to cause something to happen directly", "to compare two things in a table", "to correct a mistake in data"], wrongWords: ["corroborate", "collaborate", "calculate"], context: "Overall, better quality, longer duration, and greater consistency of sleep correlated with better grades.", para: 0 },
-  { word: "variance", partOfSpeech: "noun", definition: "how much a set of results differs or spreads out", example: "Age explained little of the variance in scores.", collocations: ["account for the variance", "variance in", "explained variance"], distractors: ["an average of several results", "a mistake in a calculation", "a change of plan"], wrongWords: ["variety", "variable", "deviation"], context: "Sleep measures accounted for nearly 25% of the variance in academic performance.", para: 0 },
-  { word: "consistency", partOfSpeech: "noun", definition: "the quality of always behaving or happening in the same way", example: "Consistency of practice matters more than long sessions.", collocations: ["greater consistency", "consistency of", "lack of consistency"], distractors: ["the thickness of a liquid only", "a sudden improvement", "a fixed rule set by a teacher"], wrongWords: ["persistence", "constancy", "insistence"], context: "Overall, better quality, longer duration, and greater consistency of sleep correlated with better grades.", para: 0 },
-  { word: "account for", partOfSpeech: "phrasal verb", definition: "to form a particular amount or part of something; to explain it", example: "Students account for most of the library’s users.", collocations: ["account for nearly", "largely account for", "account for the difference"], distractors: ["to open a bank account", "to blame someone for a mistake", "to count something twice"], wrongWords: ["count on", "make up for", "allow for"], context: "Sleep measures accounted for nearly 25% of the variance in academic performance.", para: 0 },
-  { word: "collaborative", partOfSpeech: "adjective", definition: "done by two or more people working together", example: "The module uses collaborative projects.", collocations: ["collaborative learning", "collaborative work", "a collaborative approach"], distractors: ["competitive between individuals", "done online only", "required by the university"], wrongWords: ["cooperative", "corroborative", "comparative"], context: "…performed better than those who engaged solely in collaborative or individual learning.", para: 1 },
-  { word: "solely", partOfSpeech: "adverb", definition: "only; not involving anything or anyone else", example: "The decision was based solely on cost.", collocations: ["solely on", "solely responsible", "rely solely on"], distractors: ["slowly and carefully", "mainly but not entirely", "in a lonely way"], wrongWords: ["mainly", "slowly", "merely"], context: "…performed better than those who engaged solely in collaborative or individual learning.", para: 1 },
-  { word: "demonstrate", partOfSpeech: "verb", definition: "to show clearly that something is true, using evidence", example: "The results demonstrate a clear link.", collocations: ["demonstrate that", "clearly demonstrate", "results demonstrate"], distractors: ["to protest in public only", "to suggest something is possibly true", "to describe a method"], wrongWords: ["illustrate", "denote", "determine"], context: "In Experiment 1, the results demonstrated that the participants who prepared individually before collaboration performed better…", para: 1 },
-  { word: "impair", partOfSpeech: "verb", definition: "to make something weaker or worse", example: "Lack of sleep can impair memory.", collocations: ["impair performance", "seriously impair", "impair the ability to"], distractors: ["to repair something", "to put things in pairs", "to improve slightly"], wrongWords: ["repair", "impose", "imply"], context: "…the presence of a mobile phone did not significantly distract participants or impair attentional performance.", para: 2 },
-  { word: "contrary to", partOfSpeech: "preposition", definition: "different from or opposite to what was expected or said", example: "Contrary to expectations, costs fell.", collocations: ["contrary to expectations", "contrary to previous research", "contrary to popular belief"], distractors: ["in agreement with", "as a result of", "in addition to"], wrongWords: ["according to", "due to", "similar to"], context: "Contrary to previous literature, the presence of a mobile phone did not significantly distract participants…", para: 2 },
-  { word: "significantly", partOfSpeech: "adverb", definition: "in a way that is large or important enough to matter (in research, unlikely to be chance)", example: "Scores rose significantly after the course.", collocations: ["significantly higher", "did not significantly", "significantly affect"], distractors: ["slightly and slowly", "in a meaningful symbolic way", "by coincidence"], wrongWords: ["signally", "considerably", "sufficiently"], context: "…the presence of a mobile phone did not significantly distract participants or impair attentional performance.", para: 2 },
-];
-
 /** Replays a review history along the spaced schedule. Returns reviews before today, the step reached and the next due date. */
-function replay(start: string, results: boolean[], today: string, dict = false) {
+function replay(start: string, results: boolean[], today: string) {
   let step = 0;
   let cur = start;
   const reviews: { date: string; ok: boolean; gap: number }[] = [];
   for (const ok of results) {
-    const gap = dict && reviews.length && !reviews[reviews.length - 1].ok ? 1 : REVIEW_INTERVALS[Math.min(step, REVIEW_INTERVALS.length - 1)];
+    const gap = REVIEW_INTERVALS[Math.min(step, REVIEW_INTERVALS.length - 1)];
     const date = addDays(cur, gap);
     if (date >= today) break;
     reviews.push({ date, ok, gap });
-    step = ok ? step + 1 : dict ? Math.max(0, step - 1) : 0;
+    step = ok ? step + 1 : 0;
     cur = date;
   }
-  const lastFailed = dict && reviews.length > 0 && !reviews[reviews.length - 1].ok;
-  const due = step >= REVIEW_INTERVALS.length ? (dict ? "9999-12-31" : undefined) : addDays(cur, lastFailed ? 1 : REVIEW_INTERVALS[step]);
+  const due = step >= REVIEW_INTERVALS.length ? undefined : addDays(cur, REVIEW_INTERVALS[step]);
   return { reviews, step, due };
 }
 
@@ -376,36 +362,11 @@ export function loadSampleHistory() {
     };
   });
 
-  const QUIZ: QuizType[] = ["meaning", "gap", "recall", "use"];
-  const dictionary: DictEntry[] = DICT.map((d, k) => {
-    const added = days[Math.min(days.length - 1, 1 + k * 2)];
-    const results = [true, k % 3 !== 1, true, k % 4 !== 2, true].slice(0, 2 + (k % 4));
-    const r = replay(added, results, today, true);
-    const src = WARMUPS[d.para].source!;
-    return {
-      id: `sample-dict-${k}`,
-      word: d.word,
-      partOfSpeech: d.partOfSpeech,
-      definition: d.definition,
-      example: d.example,
-      collocations: d.collocations,
-      distractors: d.distractors,
-      wrongWords: d.wrongWords,
-      context: d.context,
-      from: src.cite,
-      added,
-      step: r.step,
-      due: r.due ?? "9999-12-31",
-      reviews: r.reviews.map((x, n) => ({ date: x.date, ok: x.ok, type: QUIZ[(n + k) % QUIZ.length] })),
-    };
-  });
-
   const ids = new Set(sessions.map((s) => s.id));
   update((s) => ({
     ...s,
     sessions: [...s.sessions.filter((x) => !x.sample), ...sessions].sort((a, b) => a.startedAt.localeCompare(b.startedAt)),
     bank: [...s.bank.filter((b) => !ids.has(b.sessionId)), ...bank].sort((a, b) => a.date.localeCompare(b.date)),
-    dictionary: [...(s.dictionary ?? []).filter((e) => !e.id.startsWith("sample-dict-")), ...dictionary],
     customPrompts: s.customPrompts ?? [],
     profile: s.profile
       ? { ...s.profile, focus: { id: "hedging", since: days[6] }, frozenDates: [...new Set([...s.profile.frozenDates, addDays(today, -5)])] }
@@ -421,7 +382,6 @@ export function clearSampleHistory() {
       ...s,
       sessions: s.sessions.filter((x) => !x.sample),
       bank: s.bank.filter((b) => !sampleIds.has(b.sessionId)),
-      dictionary: (s.dictionary ?? []).filter((e) => !e.id.startsWith("sample-dict-")),
       profile: s.profile ? { ...s.profile, frozenDates: s.profile.frozenDates.filter((d) => d !== addDays(today, -5)) } : s.profile,
     };
   });

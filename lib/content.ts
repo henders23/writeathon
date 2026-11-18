@@ -110,30 +110,6 @@ export const FALLBACK_HUNT: HuntItem[] = [
   { phrase: "in contrast", tag: "Organisation · linking", example: "In contrast, rural areas saw little change." },
 ];
 
-export type SurgeryItem = { sentences: string[]; technique: string; hint: string; model: string };
-
-export const FALLBACK_SURGERY: SurgeryItem[] = [
-  {
-    sentences: ["The study used a small sample.", "Its findings are still useful.", "They suggest a clear pattern."],
-    technique: "Concession with although",
-    hint: "Start with ‘Although’ and keep the main point in the main clause.",
-    model: "Although the study used a small sample, its findings are still useful because they suggest a clear pattern.",
-  },
-  {
-    sentences: ["Many cities have introduced cycle lanes.", "Cycle lanes reduce traffic.", "They also improve air quality."],
-    technique: "Relative clause",
-    hint: "Use ‘which’ to attach what cycle lanes do.",
-    model: "Many cities have introduced cycle lanes, which reduce traffic and improve air quality.",
-  },
-  {
-    sentences: ["Prices increased sharply.", "This happened in 2022.", "As a result, demand fell."],
-    technique: "Noun phrase",
-    hint: "Turn ‘prices increased’ into a noun phrase: ‘The sharp increase in…’.",
-    model: "The sharp increase in prices in 2022 led to a fall in demand.",
-  },
-];
-export const SURGERY_SECONDS = 90;
-
 /* ---------- Paragraph moves (what each sentence does) ---------- */
 
 export const MOVE_IDS = ["claim", "define", "context", "summarise", "explain", "example", "evidence", "data", "synthesise", "concede", "counter", "sowhat", "recommend"] as const;

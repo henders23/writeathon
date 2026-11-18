@@ -1,5 +1,5 @@
 import type { DailyPrompt, Frame, Source, TaskId } from "./bank/types";
-import type { Band, CriterionId, HuntItem, MoveId, RowId, SurgeryItem } from "./content";
+import type { Band, CriterionId, HuntItem, MoveId, RowId } from "./content";
 
 export type Evidence = "S" | "G" | "N"; // used well, gap noticed, not tested
 
@@ -119,24 +119,6 @@ export type BankItem = {
   reviews?: { date: string; ok: boolean; gap?: number }[];
 };
 
-export type DictEntry = {
-  id: string;
-  word: string;
-  partOfSpeech: string;
-  definition: string;
-  example: string;
-  collocations: string[];
-  distractors: string[]; // wrong definitions, for quizzes
-  wrongWords: string[]; // plausible wrong words, for gap-fill quizzes
-  context: string; // the sentence the student found it in
-  from: string; // where it was found, e.g. "Okafor et al. (2022)"
-  added: string; // date
-  step: number;
-  due: string;
-  reviews: { date: string; ok: boolean; type: QuizType }[];
-};
-export type QuizType = "meaning" | "gap" | "recall" | "use";
-
 export type Profile = {
   name: string;
   discipline: string;
@@ -147,16 +129,11 @@ export type Profile = {
   frozenDates: string[];
 };
 
-export type SurgeryRun = { date: string; points: number; max: number };
-
 export type AppState = {
   version: 1;
   profile: Profile | null;
   sessions: Session[];
   bank: BankItem[];
-  dictionary: DictEntry[];
   customPrompts: DailyPrompt[];
   huntCache: { date: string; promptId: string; focusId: string; items: HuntItem[] } | null;
-  surgeryCache: { date: string; promptId: string; items: SurgeryItem[] } | null;
-  surgeryRuns: SurgeryRun[];
 };

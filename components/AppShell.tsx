@@ -3,18 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppState } from "@/lib/store";
-import DictionaryCapture from "./DictionaryCapture";
 
 const NAV = [
   { href: "/", label: "Today", also: [] as string[] },
-  { href: "/practice", label: "Practice", also: ["/surgery", "/revise", "/own"] },
+  { href: "/practice", label: "Practice", also: ["/revise", "/own", "/hunt"] },
   { href: "/progress", label: "Progress", also: ["/pattern"] },
-  { href: "/bank", label: "Library", also: ["/dictionary", "/review"] },
-];
-
-const LIBRARY = [
-  { href: "/bank", label: "Sentence bank" },
-  { href: "/dictionary", label: "Dictionary" },
+  { href: "/bank", label: "Bank", also: ["/review"] },
 ];
 
 function initials(name: string) {
@@ -26,7 +20,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const state = useAppState();
   const profile = state?.profile;
-  const inLibrary = LIBRARY.some((l) => path === l.href);
   return (
     <div className="app">
       <header className="topbar">
@@ -52,17 +45,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </header>
-      {inLibrary && (
-        <nav className="subnav" aria-label="Library">
-          {LIBRARY.map((l) => (
-            <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-      )}
       {children}
-      <DictionaryCapture />
     </div>
   );
 }
@@ -95,7 +78,6 @@ export function SessionShell({ step, children }: { step: number; children: React
         </div>
       </header>
       {children}
-      <DictionaryCapture />
     </div>
   );
 }

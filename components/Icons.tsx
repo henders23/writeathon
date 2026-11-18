@@ -101,13 +101,6 @@ export const Bookmark = ({ size = 22, color = "currentColor", strokeWidth = 1.8 
     <path d="M6.5 3.5h11v17l-5.5-4-5.5 4z" />
   </svg>
 );
-export const Scissors = ({ size = 18, color = "currentColor", strokeWidth = 1.8 }: P) => (
-  <svg {...base(size)} stroke={color} strokeWidth={strokeWidth}>
-    <circle cx="6" cy="6.5" r="2.5" />
-    <circle cx="6" cy="17.5" r="2.5" />
-    <path d="M8.2 7.8 20 18M8.2 16.2 20 6" />
-  </svg>
-);
 export const Eye = ({ size = 16, color = "currentColor", strokeWidth = 1.8 }: P) => (
   <svg {...base(size)} stroke={color} strokeWidth={strokeWidth}>
     <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
@@ -123,11 +116,6 @@ export const Sun = ({ size = 18, color = "currentColor", strokeWidth = 1.8 }: P)
   <svg {...base(size)} stroke={color} strokeWidth={strokeWidth}>
     <circle cx="12" cy="12" r="4" />
     <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-  </svg>
-);
-export const Book = ({ size = 20, color = "currentColor", strokeWidth = 1.8 }: P) => (
-  <svg {...base(size)} stroke={color} strokeWidth={strokeWidth}>
-    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
   </svg>
 );
 export const Plus = ({ size = 16, color = "currentColor", strokeWidth = 2 }: P) => (

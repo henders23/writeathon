@@ -85,7 +85,7 @@ export default function FeedbackPage() {
                 ? "Feedback didn’t arrive"
                 : "Reading your paragraph…"}
           </h1>
-          {fb?.summary && <p className="lead" data-dict="Feedback">{fb.summary}</p>}
+          {fb?.summary && <p className="lead">{fb.summary}</p>}
         </div>
 
         {!fb && !session.feedbackError && (
@@ -108,11 +108,11 @@ export default function FeedbackPage() {
         {fb?.workOn && (
           <section className="panel hero" aria-labelledby="rw-h">
             <h2 id="rw-h" className="eyebrow amber">Rewrite this one · {ROWS[fb.workOn.row]?.label} · {fb.workOn.label}</h2>
-            <p className="sentence" style={{ fontSize: 22 }} data-dict={session.topic}>
+            <p className="sentence" style={{ fontSize: 22 }}>
               <span className={session.banked ? "hl-work" : "mark-work"}>{fb.workOn.said}</span>
             </p>
             {workIsUnsure && <span className="pill line" style={{ alignSelf: "flex-start" }}>You weren’t sure about this one</span>}
-            <p className="body" data-dict="Feedback">{fb.workOn.comment}</p>
+            <p className="body">{fb.workOn.comment}</p>
             <RewriteIt session={session} workOn={fb.workOn} />
           </section>
         )}
@@ -121,7 +121,7 @@ export default function FeedbackPage() {
           <section className="stack g12" aria-labelledby="asked-h">
             <h2 id="asked-h" className="quiet-h">You asked about</h2>
             {fb.requestAnswers!.map((a, i) => (
-              <p key={i} className="body" style={{ fontSize: 16 }} data-dict="Feedback">
+              <p key={i} className="body" style={{ fontSize: 16 }}>
                 <strong style={{ color: "var(--ink)" }}>{REQUEST_LABEL[a.request] ?? a.request}.</strong> {a.answer}
               </p>
             ))}
@@ -159,7 +159,7 @@ export default function FeedbackPage() {
             <details className="more">
               <summary>Your paragraph, sentence by sentence <span className="aside">{rows.length} sentence{rows.length === 1 ? "" : "s"}</span></summary>
               <div className="more-body">
-                {fb.movesComment && <p className="body" data-dict="Feedback">{fb.movesComment}</p>}
+                {fb.movesComment && <p className="body">{fb.movesComment}</p>}
                 <div>
                   {rows.map((r, i) => {
                     const isWork = r.kind === "work" && fb.workOn;
@@ -171,7 +171,7 @@ export default function FeedbackPage() {
                           {r.effect && <EffectDots effect={r.effect} />}
                         </span>
                         <div className="stack g10">
-                          <p className="sentence" style={{ fontSize: 18 }} data-dict={session.topic}>
+                          <p className="sentence" style={{ fontSize: 18 }}>
                             <span className={r.kind === "strength" ? "hl-strength" : isWork ? "mark-work" : undefined}>{r.text}</span>
                           </p>
                           {isUnsure && <span className="pill line" style={{ alignSelf: "flex-start" }}>You weren’t sure about this one</span>}
@@ -236,8 +236,8 @@ export default function FeedbackPage() {
               <details className="more">
                 <summary>Compare with a model paragraph {fb.workOn && !rewritten && <span className="aside">Try your rewrite first</span>}</summary>
                 <div className="more-body">
-                  <p className="paragraph" data-dict="Model paragraph">{fb.modelParagraph}</p>
-                  <span className="small">A model, not the answer. Which sentence does something yours doesn’t? Select any useful word to add it to your dictionary.</span>
+                  <p className="paragraph">{fb.modelParagraph}</p>
+                  <span className="small">A model, not the answer. Which sentence does something yours doesn’t?</span>
                 </div>
               </details>
             )}
@@ -338,7 +338,7 @@ function Effectiveness({ fb, sources }: { fb: Feedback; sources: number }) {
   return (
     <section className="stack g16" aria-label="How well it works">
       <div className="stack g12">
-        {fb.readerEffect && <p className="lead" style={{ color: "var(--ink)" }} data-dict="Feedback">{fb.readerEffect}</p>}
+        {fb.readerEffect && <p className="lead" style={{ color: "var(--ink)" }}>{fb.readerEffect}</p>}
         <span className="small">
           Judged on effectiveness first: does the paragraph do its job for its reader? Language counts as far as it helps or blocks meaning.
           Levels are indicative, from one paragraph, aligned to the CEFR Companion Volume (2020).
@@ -362,7 +362,7 @@ function Effectiveness({ fb, sources }: { fb: Feedback; sources: number }) {
                   <div className="small" style={{ fontSize: 11.5 }}>CEFR: {CRITERIA[c.criterion].cefr}</div>
                 </td>
                 <td style={{ verticalAlign: "top", width: 150 }}><BandScale band={c.band} /></td>
-                <td style={{ verticalAlign: "top" }} data-dict="Feedback">{c.comment}</td>
+                <td style={{ verticalAlign: "top" }}>{c.comment}</td>
               </tr>
             ))}
           </tbody>

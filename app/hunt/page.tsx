@@ -73,7 +73,7 @@ function HuntPreview() {
 
         <section className="card flat">
           <span className="eyebrow">Today’s task</span>
-          <p className="body" style={{ fontSize: 16, color: "var(--ink)" }} data-dict="Writeathon task">{prompt.text}</p>
+          <p className="body" style={{ fontSize: 16, color: "var(--ink)" }}>{prompt.text}</p>
         </section>
 
         {error && <div className="notice">{error}</div>}

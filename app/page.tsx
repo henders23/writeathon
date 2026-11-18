@@ -12,7 +12,6 @@ import { dayKey, greeting, longDate } from "@/lib/dates";
 import {
   counts,
   currentStreak,
-  dictDue,
   dueBankItems,
   focusForDay,
   lastAttempt,
@@ -35,14 +34,13 @@ export default function Today() {
   if (!state) return <Loading />;
   if (!state.profile) return <Onboarding />;
 
-  const { profile, sessions, bank, dictionary } = state;
+  const { profile, sessions, bank } = state;
   const today = dayKey();
   const streak = currentStreak(profile, sessions, today);
   const wroteToday = sessions.some((s) => s.date === today && counts(s));
   const todaysSession = [...sessions].reverse().find((s) => s.date === today && counts(s));
   const [first, ...others] = todaysChoices(profile, sessions, today);
   const due = dueBankItems(bank, today);
-  const wordsDue = dictDue(dictionary, today);
   const reviseNow = revisionDue(sessions, today);
   const feedbackHref = todaysSession
     ? todaysSession.mode === "hunt"
@@ -56,7 +54,7 @@ export default function Today() {
     : streak > 0
       ? `${streak}-day streak · write to reach ${streak + 1}`
       : "Write today to start a streak";
-  const hasAfter = due.length > 0 || wordsDue.length > 0 || reviseNow;
+  const hasAfter = due.length > 0 || reviseNow;
 
   return (
     <AppShell>
@@ -88,9 +86,6 @@ export default function Today() {
             {due.length > 0 && (
               <Link className="text-btn" href="/review">Fix {due.length} banked sentence{due.length === 1 ? "" : "s"} from memory</Link>
             )}
-            {wordsDue.length > 0 && (
-              <Link className="text-btn" href="/dictionary/quiz">Quiz {Math.min(10, wordsDue.length)} word{wordsDue.length === 1 ? "" : "s"} from your dictionary</Link>
-            )}
             {reviseNow && <Link className="text-btn" href="/revise">Revision day: rework one whole paragraph</Link>}
           </section>
         )}
@@ -114,7 +109,7 @@ function TodayCard({ prompt, focusId, again, repeat, feedbackHref }: { prompt: D
         {again ? "Write another" : prompt.warmup ? "Start with a warm-up" : "Today’s paragraph"} · {TASKS[prompt.task].label}
       </p>
       <h2 id="today-h" className="h2" style={{ fontSize: 32, lineHeight: 1.15 }}>{prompt.topic}</h2>
-      <p className="lead" data-dict="Writeathon task">{prompt.text}</p>
+      <p className="lead">{prompt.text}</p>
       <p className="small" style={{ fontSize: 14 }}>
         {sourceNote(prompt)} · {target.min}–{target.max} words{focus ? ` · focus on ${focus.label.charAt(0).toLowerCase()}${focus.label.slice(1)}` : ""}
         {repeat ? " · you wrote on this before: beat it" : ""}

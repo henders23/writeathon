@@ -29,7 +29,7 @@ export default function SourceCard({ source, compact = false, helper = true, lab
         <span className="tag">{label ?? (source.kind === "data" ? "Data source" : "Source")}</span>
         <span className="cite">{source.cite}</span>
       </span>
-      <blockquote data-dict={source.cite} style={compact ? { fontSize: 15 } : undefined}>
+      <blockquote style={compact ? { fontSize: 15 } : undefined}>
         {source.own ? source.text : `“${source.text}”`}
       </blockquote>
       <figcaption className="ref">
@@ -61,17 +61,16 @@ export default function SourceCard({ source, compact = false, helper = true, lab
           {explained && (
             <div className="card tight flat">
               <span className="eyebrow blue">In plain English</span>
-              <p className="body" data-dict={source.cite}>{explained.plain}</p>
+              <p className="body">{explained.plain}</p>
               {explained.keyWords.length > 0 && (
                 <div className="stack g4">
                   {explained.keyWords.map((k) => (
-                    <span key={k.word} className="small" data-dict={source.cite}>
+                    <span key={k.word} className="small">
                       <strong style={{ color: "var(--ink)" }}>{k.word}</strong>: {k.meaning}
                     </span>
                   ))}
                 </div>
               )}
-              <span className="small">Select any word to add it to your dictionary.</span>
             </div>
           )}
           {err && <div className="error">{err}</div>}

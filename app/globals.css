@@ -247,13 +247,6 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 .table-view { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table-view th, .table-view td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
 
-/* Dictionary */
-.dict-pop { position: fixed; z-index: 60; transform: translate(-50%, -100%); background: var(--ink); color: var(--on-ink); border-radius: 12px; padding: 6px; display: flex; gap: 4px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-.dict-pop button { border: none; background: transparent; color: var(--on-ink); font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-.dict-pop button:hover { background: rgba(255,255,255,0.12); }
-.toast { position: fixed; z-index: 70; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--on-ink); border-radius: 14px; padding: 12px 18px; font-size: 14px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); max-width: 520px; }
-[data-dict] { cursor: text; }
-.word-card .word { font-family: var(--serif); font-size: 26px; }
 .option { width: 100%; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-size: 16px; line-height: 1.4; color: var(--ink); }
 .option:hover { border-color: var(--ink-3); }
 .option.right { border: 2px solid var(--blue); background: var(--blue-tint); }
@@ -297,10 +290,6 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
 /* ---------- One place to look ----------
    Each screen has a single raised panel holding the thing to do now, and one filled button.
    Everything else sits flat on the page background as quiet text. */
-.subnav { display: flex; gap: 4px; padding: 10px 32px 0; max-width: 1360px; width: 100%; margin: 0 auto; }
-.subnav a { font-size: 14px; color: var(--ink-3); text-decoration: none; padding: 10px 14px; border-radius: 16px; }
-.subnav a:hover { background: var(--sand); color: var(--ink); }
-.subnav a[aria-current="page"] { background: var(--line); color: var(--ink); font-weight: 600; }
 .step-now { margin: 0 auto; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .step-bar { display: flex; gap: 4px; }
 .step-bar span { width: 28px; height: 4px; border-radius: 2px; background: var(--line-2); }
@@ -324,8 +313,7 @@ button, input, select, textarea { font-family: inherit; color: inherit; }
   .session-main { grid-template-columns: minmax(0, 1fr); padding: 20px 16px 40px; gap: 24px; }
   .plan-row { grid-template-columns: 24px minmax(0, 1fr) auto; }
   .plan-row input { grid-column: 2 / -1; grid-row: 2; }
-  .subnav { padding: 10px 16px 0; }
-  .hero { padding: 24px; }
+    .hero { padding: 24px; }
   .editor { padding: 20px 24px; }
 }
 details.more { border-top: 1px solid var(--line-2); }
