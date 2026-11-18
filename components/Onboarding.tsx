@@ -8,6 +8,7 @@ import { dayKey } from "@/lib/dates";
 import { DISCIPLINES } from "@/lib/disciplines";
 import { saveProfile } from "@/lib/store";
 import ThemeToggle from "./ThemeToggle";
+import Welcome from "./Welcome";
 
 /** Two-step start: context and set-up, then how feedback works. */
 export default function Onboarding() {
@@ -51,7 +52,7 @@ export default function Onboarding() {
         </div>
       </header>
       {step === 0 ? (
-        <StartScreen onStart={() => setStep(1)} />
+        <Welcome onStart={() => setStep(1)} />
       ) : step === 1 ? (
         <main className="container narrow" style={{ paddingTop: 40, maxWidth: 560 }}>
           <form
@@ -107,62 +108,6 @@ export default function Onboarding() {
         </main>
       )}
     </div>
-  );
-}
-
-const STEPS = [
-  { icon: "plan", label: "Plan", time: "2 min" },
-  { icon: "write", label: "Write", time: "5 min" },
-  { icon: "improve", label: "Improve", time: "3 min" },
-] as const;
-
-function StepIcon({ kind }: { kind: (typeof STEPS)[number]["icon"] }) {
-  const common = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-  if (kind === "plan")
-    return (
-      <svg {...common} stroke="var(--blue)">
-        <path d="M11 6h9M11 12h9M12 18h8M4 16a2 2 0 1 1 4 0c0 .6-.5 1-1 1.5L4 20h4M6 10V4L4 6" />
-      </svg>
-    );
-  if (kind === "write")
-    return (
-      <svg {...common} stroke="var(--blue)">
-        <path d="M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />
-      </svg>
-    );
-  return (
-    <svg {...common} stroke="var(--amber)">
-      <path d="M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-5l-5 3v-3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h12z" />
-    </svg>
-  );
-}
-
-/** The first screen anyone sees: what Writeathon is, in as few words as possible. */
-function StartScreen({ onStart }: { onStart: () => void }) {
-  return (
-    <main className="start" aria-labelledby="start-h">
-      <h1 id="start-h" className="start-title">
-        Ten minutes.
-        <br />
-        One paragraph.
-        <br />
-        Every day.
-      </h1>
-      <p className="lead" style={{ textAlign: "center" }}>Academic writing practice that makes you a stronger writer.</p>
-      <ol className="start-steps" aria-label="Each session">
-        {STEPS.map((s) => (
-          <li key={s.label}>
-            <StepIcon kind={s.icon} />
-            <strong>{s.label}</strong>
-            <span className="small">{s.time}</span>
-          </li>
-        ))}
-      </ol>
-      <button className="btn" style={{ minWidth: 180 }} onClick={onStart} autoFocus>
-        Start <span aria-hidden="true">→</span>
-      </button>
-      <p className="small" style={{ textAlign: "center" }}>Real research · Feedback you can use · Your progress, tracked</p>
-    </main>
   );
 }
 

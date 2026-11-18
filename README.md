@@ -10,7 +10,7 @@ Students learn more from planning and revising than from drafting, so the sessio
 
 ## The session
 
-New students see a minimal start screen (“Ten minutes. One paragraph. Every day.”, the three parts of a session, and Start), then a short set-up and a page on how feedback works.
+Every visit opens with a welcome screen: two sentences on what Writeathon is and how to use it, and a **Let’s get writing!** button (shown once per browser tab session). New students then get a short set-up and a page on how feedback works.
 
 | Step | What happens |
 |---|---|

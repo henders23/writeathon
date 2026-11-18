@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppState } from "@/lib/store";
+import { useWelcomed } from "@/lib/welcome";
+import Welcome from "./Welcome";
 
 const NAV = [
   { href: "/", label: "Today", also: [] as string[] },
@@ -20,6 +22,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const state = useAppState();
   const profile = state?.profile;
+  const welcomed = useWelcomed();
+  // Each visit opens with the welcome screen; it gives way to whichever page was asked for.
+  if (profile && welcomed === false) {
+    return (
+      <div className="app">
+        <header className="topbar">
+          <span className="brand">
+            <span className="wordmark">Writeathon</span>
+            <span className="byline">By Paul Hendrie</span>
+          </span>
+        </header>
+        <Welcome name={profile.name.split(/\s+/)[0]} />
+      </div>
+    );
+  }
   return (
     <div className="app">
       <header className="topbar">
