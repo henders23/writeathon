@@ -97,7 +97,13 @@ export async function POST(req: Request) {
     fb.hunt = hunt.length ? hunt.map((h, i) => fb.hunt?.[i] ?? { item: h.phrase, verdict: "missed", quote: "", note: "" }) : [];
     const labels = new Set(bank.map((x) => x.label));
     fb.requestAnswers = requests.length || note ? (fb.requestAnswers ?? []) : [];
-    fb.focusEvidence = fb.focusEvidence ?? [];
+    // Focus ids are free text in the schema, so keep only real ones and fall back to today's focus.
+    const known = (id: unknown) => (typeof id === "string" && FOCUS_BY_ID[id.trim()] ? id.trim() : focus.id);
+    fb.focusEvidence = (fb.focusEvidence ?? []).filter((e) => FOCUS_BY_ID[e.focusId?.trim()]).map((e) => ({ ...e, focusId: e.focusId.trim() }));
+    fb.nextFocusSuggestion = known(fb.nextFocusSuggestion);
+    fb.strengths = (fb.strengths ?? []).map((x) => ({ ...x, focusId: known(x.focusId) }));
+    if (fb.workOn) fb.workOn = { ...fb.workOn, focusId: known(fb.workOn.focusId) };
+    if (fb.carryForward) fb.carryForward = { ...fb.carryForward, focusId: known(fb.carryForward.focusId) };
     fb.focusPhrasesUsed = fb.focusPhrasesUsed ?? [];
 
     // Every quote is shown highlighted in the student's own paragraph, so it has to be there.

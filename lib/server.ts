@@ -61,8 +61,18 @@ export async function structured<T>(opts: StructuredOpts): Promise<T> {
 
 /* ---------- Claude (Anthropic Messages API, structured outputs) ---------- */
 
-async function claudeStructured<T>(opts: StructuredOpts): Promise<T> {
-  const res = await fetch(`${env.anthropicBaseUrl()}/messages`, {
+/** Schemas Claude could not compile into a grammar; later calls skip straight to plain JSON. */
+const tooComplex = new Set<string>();
+
+function claudeRequest(opts: StructuredOpts, constrained: boolean) {
+  const system: object[] = [{ type: "text", text: opts.instructions, cache_control: { type: "ephemeral" } }];
+  if (!constrained) {
+    system.push({
+      type: "text",
+      text: `Reply with one JSON object and nothing else: no code fences, no commentary. Include every required property. It must match this JSON Schema:\n${JSON.stringify(opts.schema)}`,
+    });
+  }
+  return fetch(`${env.anthropicBaseUrl()}/messages`, {
     method: "POST",
     headers: {
       "x-api-key": env.anthropicKey(),
@@ -73,20 +83,38 @@ async function claudeStructured<T>(opts: StructuredOpts): Promise<T> {
       model: opts.fast ? env.anthropicFastModel() : env.anthropicModel(),
       max_tokens: opts.maxTokens ?? (opts.fast ? 600 : 3000),
       // The instructions are identical on every call, so cache them: later calls read them at a fraction of the cost.
-      system: [{ type: "text", text: opts.instructions, cache_control: { type: "ephemeral" } }],
+      system,
       messages: [{ role: "user", content: opts.input }],
-      output_config: { format: { type: "json_schema", schema: opts.schema } },
+      ...(constrained ? { output_config: { format: { type: "json_schema", schema: opts.schema } } } : {}),
     }),
   });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Claude API error ${res.status}: ${detail.slice(0, 400)}`);
+}
+
+async function claudeStructured<T>(opts: StructuredOpts): Promise<T> {
+  let constrained = !tooComplex.has(opts.schemaName);
+  let res = await claudeRequest(opts, constrained);
+  let detail = res.ok ? "" : await res.text();
+  // Claude refuses schemas whose compiled grammar is too big. Rather than fail, ask for the same JSON unconstrained.
+  if (constrained && res.status === 400 && /grammar|too complex/i.test(detail)) {
+    console.warn(`Schema "${opts.schemaName}" is too complex for structured outputs; using plain JSON instead.`);
+    tooComplex.add(opts.schemaName);
+    constrained = false;
+    res = await claudeRequest(opts, false);
+    detail = res.ok ? "" : await res.text();
   }
+  if (!res.ok) throw new Error(`Claude API error ${res.status}: ${detail.slice(0, 400)}`);
   const data = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
   if (data.stop_reason === "refusal") throw new Error("The model declined to respond.");
   if (data.stop_reason === "max_tokens") throw new Error("The model's answer was cut off (max_tokens).");
-  const text = (data.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("");
+  let text = (data.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("");
   if (!text) throw new Error("Empty response from Claude.");
+  if (!constrained) {
+    // Without the grammar the model may still wrap the object in a fence or a sentence.
+    const from = text.indexOf("{");
+    const to = text.lastIndexOf("}");
+    if (from < 0 || to <= from) throw new Error("Claude did not return JSON.");
+    text = text.slice(from, to + 1);
+  }
   return JSON.parse(text) as T;
 }
 

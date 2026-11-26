@@ -75,7 +75,9 @@ ${FOCUSES.map((f) => `- ${f.id} [${f.row}] ${f.label}: ${f.rubric}`).join("\n")}
 
 const evidence = { type: "string", enum: ["S", "G", "N"] };
 const row = { type: "string", enum: [...ROW_IDS] };
-const focusId = { type: "string", enum: FOCUSES.map((f) => f.id) };
+// A plain string, not an enum: the id list is long and is used in five places, which made the schema
+// too large for Claude's structured outputs to compile. The feedback route checks ids against FOCUS_BY_ID.
+const focusId = { type: "string", description: "One of the focus ids listed in the instructions, exactly as written." };
 const str = { type: "string" };
 
 export const FEEDBACK_SCHEMA = {
